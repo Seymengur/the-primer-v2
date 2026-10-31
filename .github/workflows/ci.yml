@@ -1,4 +1,4 @@
-name: CI — Eğitim, Eval Kapısı ve Diferansiyel Parite Doğrulaması
+name: CI — Eğitim, Eval Kapısı, Diferansiyel Parite ve Cypress E2E
 
 on:
   push:
@@ -28,3 +28,21 @@ jobs:
           fi
       - name: Python Test Kahini (Oracle) parite kontrolü (< 1e-4)
         run: python tests/parite.py --check
+      - name: Bonus Sunucu Tüketicisi (server/app.py) parite kontrolü (< 1e-4)
+        run: python tests/test_server_parity.py
+
+  cypress-e2e:
+    runs-on: ubuntu-latest
+    needs: train-and-parity
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Cypress kurulumu
+        run: npm install
+      - name: Web sunucusunu başlat ve Cypress (Parite + Regresyon E2E) testlerini çalıştır
+        run: |
+          python3 -m http.server 8080 --directory web &
+          sleep 2
+          npx cypress run
