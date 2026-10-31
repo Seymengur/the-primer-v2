@@ -6,6 +6,7 @@ birebir uyumlu şekilde çalıştırır.
 
 Komutlar:
     python hf_cli.py train          → train.py + tests/parite.py çalıştırır
+    python hf_cli.py pull-cloud     → Canlı web uygulamasından buluta otomatik kaydedilen arkadaş oturumlarını data/oturumlar.csv'ye ekler
     python hf_cli.py predict        → yerel model ile örnek çıkarım yapar
     python hf_cli.py push-model     → model/ klasörünü Hugging Face Hub'a yükler ve commit SHA döner
     python hf_cli.py hub-predict    → HF Hub'daki commit'li model.onnx'i indirip çıkarım yapar
@@ -14,6 +15,7 @@ Komutlar:
 import argparse
 import json
 import sys
+import urllib.request
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -32,6 +34,54 @@ from train import MODEL_DIR, VERI_YOLU, egit_ve_paketle
 
 BURASI = Path(__file__).resolve().parent
 VARSAYILAN_AD = "the-primer-v2-onnx"
+BULUT_KANALI = "the_primer_v2_seymen_oturumlar_live"
+
+
+def cmd_pull_cloud(args):
+    url = f"https://ntfy.sh/{BULUT_KANALI}/json?poll=1&since=all"
+    print(f"☁️ Buluttaki canlı oturum verileri çekiliyor: {url}")
+    req = urllib.request.Request(url, headers={"User-Agent": "the-primer-v2-cli/2.0"})
+    yeni_satirlar = []
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        for line in resp.read().decode("utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                zarf = json.loads(line)
+                if zarf.get("event") != "message":
+                    continue
+                icerik = json.loads(zarf.get("message", "{}"))
+                for s in icerik.get("rows", []):
+                    if "oturum_id" in s and "sahne_no" in s:
+                        s["kaynak"] = "gercek"
+                        yeni_satirlar.append(s)
+            except Exception:
+                continue
+
+    if not VERI_YOLU.exists():
+        veri_uret()
+
+    mevcut_df = pd.read_csv(VERI_YOLU)
+    mevcut_anahtarlar = set(zip(mevcut_df["oturum_id"].astype(str), mevcut_df["sahne_no"].astype(int)))
+
+    eklenecek = []
+    for s in yeni_satirlar:
+        anahtar = (str(s["oturum_id"]), int(s["sahne_no"]))
+        if anahtar not in mevcut_anahtarlar:
+            mevcut_anahtarlar.add(anahtar)
+            eklenecek.append(s)
+
+    if eklenecek:
+        ek_df = pd.DataFrame(eklenecek)[mevcut_df.columns]
+        birlesik_df = pd.concat([mevcut_df, ek_df], ignore_index=True)
+        birlesik_df.to_csv(VERI_YOLU, index=False)
+        print(f"✓ Buluttan {len(eklenecek)} yeni gerçek sahne satırı data/oturumlar.csv dosyasına eklendi!")
+        print(f"  Toplam satır: {len(birlesik_df)} (Gerçek: {int((birlesik_df['kaynak'] == 'gercek').sum())})")
+    else:
+        print("ℹ Bulutta henüz data/oturumlar.csv içinde olmayan yeni bir oturum bulunamadı.")
+
+    if getattr(args, "retrain", False) and eklenecek:
+        cmd_train(args)
 
 
 def cmd_train(args):
@@ -170,6 +220,10 @@ def main():
     alt = p.add_subparsers(dest="komut", required=True)
 
     alt.add_parser("train", help="Veriyi doğrula, modeli eğit ve parite.json üret").set_defaults(fn=cmd_train)
+
+    pc = alt.add_parser("pull-cloud", help="Canlı web uygulamasından buluta gelen arkadaş verilerini data/oturumlar.csv'ye çek")
+    pc.add_argument("--retrain", action="store_true", help="Yeni veri eklendiyse modeli otomatik yeniden eğit")
+    pc.set_defaults(fn=cmd_pull_cloud)
 
     w = alt.add_parser("whoami", help="Hugging Face girişini doğrula")
     w.add_argument("--token", help="Hugging Face Write token (hf_...)")

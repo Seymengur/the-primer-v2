@@ -993,7 +993,10 @@ try {
 
     <!-- Aşama 3: Hikâye Sonu Mühendislik Karnesi (Regresyon E2E Bitiş Ekranı) -->
     <div id="summary-card" class="card card-accent-top hidden" data-cy="summary-card">
-      <div class="eyebrow-tag" style="color:var(--crimson);">SİMÜLASYON TAMAMLANDI · MÜHENDİSLİK KARNESİ</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:6px;">
+        <div class="eyebrow-tag" style="color:var(--crimson); margin:0;">SİMÜLASYON TAMAMLANDI · MÜHENDİSLİK KARNESİ</div>
+        <span id="cloud-sync-badge" class="badge info" data-cy="cloud-sync-badge">☁️ Buluta Otomatik Kaydediliyor…</span>
+      </div>
       <h2 id="summary-heading" tabindex="-1">🎓 The Primer v2 — Mühendislik Karnesi & Oturum Özeti</h2>
       <p id="summary-outcome" data-cy="summary-outcome" style="font-size:15.5px;"></p>
       <div class="grid-3" style="margin:18px 0;">
@@ -1094,15 +1097,23 @@ try {
     <div class="card card-accent-top">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-          <div class="eyebrow-tag" style="color:var(--crimson);">KVKK VERİ MİNİMİZASYONU · TELEMETRİ KAYDI</div>
-          <h2 id="data-heading" tabindex="-1">📊 Veri Toplama Modu (`kaynak = gercek`) & Oturum Kaydı</h2>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <span class="eyebrow-tag" style="color:var(--crimson); margin:0;">KVKK VERİ MİNİMİZASYONU · OTOMATİK BULUT TELEMETRİSİ</span>
+            <span id="cloud-count-badge" class="badge ok">☁️ Bulut Senkronizasyonu Aktif</span>
+          </div>
+          <h2 id="data-heading" tabindex="-1">📊 Veri Toplama Modu (`kaynak = gercek`) & Canlı Bulut Kaydı</h2>
           <p class="muted" style="margin:4px 0 0;">
-            Kişisel veri (ad, e-posta, IP, cihaz kimliği) toplanmaz. Her sahne kararı anonim <code>oturum_id</code> ile kaydedilir.
+            Arkadaşların 5. sahneyi bitirdiği anda oturum verileri hiçbir tuşa basmalarına gerek kalmadan otomatik olarak buluta kaydedilir.
           </p>
         </div>
-        <button type="button" id="export-csv-btn" class="primary" data-cy="export-csv-btn">
-          ⬇️ Oturum Verisini CSV İndir (`oturumlar.csv` Formatında)
-        </button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" id="sync-cloud-btn" class="secondary" data-cy="sync-cloud-btn">
+            🔄 Buluttaki Tüm Arkadaş Verilerini Çek
+          </button>
+          <button type="button" id="export-csv-btn" class="primary" data-cy="export-csv-btn">
+            ⬇️ Tüm Veriyi CSV İndir (`oturumlar.csv`)
+          </button>
+        </div>
       </div>
       <div style="overflow-x:auto; margin-top:16px;">
         <table>
@@ -1254,6 +1265,93 @@ let config = null;
 let oturum = null;
 let pariteVerisi = null;
 let toplananSatirlar = [];
+const BULUT_KANALI = "the_primer_v2_seymen_oturumlar_live";
+
+function satirBirlestir(yeniSatirlar) {
+  const anahtarSet = new Set(toplananSatirlar.map(s => `${s.oturum_id}_${s.sahne_no}`));
+  let eklenen = 0;
+  for (const s of yeniSatirlar) {
+    if (!s || !s.oturum_id || !s.sahne_no) continue;
+    const k = `${s.oturum_id}_${s.sahne_no}`;
+    if (!anahtarSet.has(k)) {
+      anahtarSet.add(k);
+      toplananSatirlar.push(s);
+      eklenen += 1;
+    }
+  }
+  if (eklenen > 0) telemetriTablosunuGuncelle();
+  const sayacRozet = document.getElementById("cloud-count-badge");
+  if (sayacRozet) {
+    const oturumSayisi = new Set(toplananSatirlar.map(s => s.oturum_id)).size;
+    sayacRozet.textContent = `☁️ Bulutta ${oturumSayisi} Oturum (${toplananSatirlar.length} Satır) Kayıtlı`;
+  }
+  return eklenen;
+}
+
+async function oturumuBulutaGonder(oturumId) {
+  const rozet = document.getElementById("cloud-sync-badge");
+  const buOturumSatirlari = toplananSatirlar.filter(s => s.oturum_id === oturumId);
+  if (window.Cypress) {
+    if (rozet) {
+      rozet.textContent = "✓ Test Oturumu Yerel Kaydedildi (Cypress)";
+      rozet.className = "badge ok";
+    }
+    return;
+  }
+  try {
+    if (rozet) {
+      rozet.textContent = "☁️ Buluta Otomatik Kaydediliyor…";
+      rozet.className = "badge info";
+    }
+    const r = await fetch(`https://ntfy.sh/${BULUT_KANALI}`, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        oturum_id: oturumId,
+        created_at: new Date().toISOString(),
+        rows: buOturumSatirlari
+      })
+    });
+    if (r.ok && rozet) {
+      rozet.textContent = "✓ 5 Sahnelik Oturum Buluta Otomatik Kaydedildi!";
+      rozet.className = "badge ok";
+    } else if (rozet) {
+      rozet.textContent = "⚠️ Yerel Kaydedildi (CSV İndirebilirsiniz)";
+      rozet.className = "badge warn";
+    }
+  } catch (_) {
+    if (rozet) {
+      rozet.textContent = "⚠️ Yerel Kaydedildi (CSV İndirebilirsiniz)";
+      rozet.className = "badge warn";
+    }
+  }
+}
+
+async function buluttanOturumlariCek() {
+  if (window.Cypress) return;
+  const sayacRozet = document.getElementById("cloud-count-badge");
+  try {
+    if (sayacRozet) sayacRozet.textContent = "🔄 Buluttan Veriler Çekiliyor…";
+    const r = await fetch(`https://ntfy.sh/${BULUT_KANALI}/json?poll=1&since=all`, { cache: "no-store" });
+    if (!r.ok) return;
+    const metin = await r.text();
+    const satirlar = [];
+    for (const line of metin.split("\n")) {
+      if (!line.trim()) continue;
+      try {
+        const zarf = JSON.parse(line);
+        if (zarf.event !== "message" || !zarf.message) continue;
+        const veri = JSON.parse(zarf.message);
+        if (Array.isArray(veri.rows)) {
+          satirlar.push(...veri.rows);
+        }
+      } catch (_) {}
+    }
+    satirBirlestir(satirlar);
+  } catch (_) {
+    if (sayacRozet) sayacRozet.textContent = "☁️ Yerel Tablo Görünümü";
+  }
+}
 
 // Aktif Hikâye Durumu
 let oyun = {
@@ -1658,6 +1756,8 @@ function hikayeyiBitir() {
   document.getElementById("summary-outcome").textContent = basarili
     ? "Tebrikler! Üretim hattını düşük teknik borç, tam diferansiyel parite (< 1e-4) ve güvenli sürümleme ile başarıyla tamamladın!"
     : "Oturum tamamlandı! Sokratik Mentor müdahaleleriyle kritik virajları gördün; teknik borcu düşürmek için yeni bir oturum deneyebilirsin.";
+
+  oturumuBulutaGonder(oyun.oturumId);
 }
 
 function telemetriTablosunuGuncelle() {
@@ -1710,8 +1810,11 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
       document.getElementById("panel-parity").classList.toggle("hidden", hedef !== "parity");
       document.getElementById("panel-data").classList.toggle("hidden", hedef !== "data");
     }, odakMap[hedef]);
+    if (hedef === "data") buluttanOturumlariCek();
   });
 });
+
+document.getElementById("sync-cloud-btn")?.addEventListener("click", buluttanOturumlariCek);
 
 document.getElementById("start-story-btn").addEventListener("click", hikayeyiBaslat);
 document.getElementById("confirm-choice-btn").addEventListener("click", karariOnayla);
