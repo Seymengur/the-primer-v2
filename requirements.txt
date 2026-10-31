@@ -1,0 +1,9 @@
+# The Primer v2 — Python bağımlılıkları
+scikit-learn==1.9.1
+pandas
+numpy
+joblib
+skl2onnx==1.20.0
+onnx
+onnxruntime
+huggingface_hub>=2.3

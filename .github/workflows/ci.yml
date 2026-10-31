@@ -1,0 +1,30 @@
+name: CI — Eğitim, Eval Kapısı ve Diferansiyel Parite Doğrulaması
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  train-and-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Bağımlılıkları kur
+        run: pip install -r requirements.txt
+      - name: Veriyi doğrula ve modeli eğit (Eval Kapısı)
+        run: python train.py
+      - name: Eval Kapısının düşük performansı reddettiğini doğrula
+        run: |
+          if python train.py --min-auc 0.9999; then
+            echo "Hata: Eval kapısı 0.9999 eşiğini reddetmeliydi!"
+            exit 1
+          else
+            echo "✓ Eval kapısı eşik altı modeli başarıyla durdurdu."
+          fi
+      - name: Python Test Kahini (Oracle) parite kontrolü (< 1e-4)
+        run: python tests/parite.py --check

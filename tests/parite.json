@@ -1,0 +1,146 @@
+{
+  "contract_version": "2.0.0",
+  "tolerance": 0.0001,
+  "decision_threshold": 0.55,
+  "feature_order": [
+    "deneyim_seviyesi",
+    "sahne_zorlugu",
+    "karar_suresi_sn",
+    "secenek_degistirme_sayisi",
+    "onceki_kritik_hata_sayisi",
+    "acilan_ipucu_sayisi",
+    "mimari_risk_skoru"
+  ],
+  "cases": [
+    {
+      "id": "ornek_1_cirak_tereddutlu",
+      "description": "Kabul Örneği 1: Yüksek tereddüt ve birikimli hata yaşayan çırak (Sokratik müdahale beklenir)",
+      "input": {
+        "deneyim_seviyesi": 1.0,
+        "sahne_zorlugu": 4.0,
+        "karar_suresi_sn": 34.5,
+        "secenek_degistirme_sayisi": 5.0,
+        "onceki_kritik_hata_sayisi": 2.0,
+        "acilan_ipucu_sayisi": 2.0,
+        "mimari_risk_skoru": 0.72
+      },
+      "feature_vector": [
+        1.0,
+        4.0,
+        34.5,
+        5.0,
+        2.0,
+        2.0,
+        0.72
+      ],
+      "oracle_probability": 0.999963,
+      "oracle_probability_4dec": 1.0,
+      "oracle_Complement_probability": 3.7e-05,
+      "expected_decision": "mudahale"
+    },
+    {
+      "id": "ornek_2_usta_otonom",
+      "description": "Kabul Örneği 2: Hızlı ve hatasız ilerleyen usta mühendis adayı (Otonom akış beklenir)",
+      "input": {
+        "deneyim_seviyesi": 3.0,
+        "sahne_zorlugu": 2.0,
+        "karar_suresi_sn": 6.2,
+        "secenek_degistirme_sayisi": 0.0,
+        "onceki_kritik_hata_sayisi": 0.0,
+        "acilan_ipucu_sayisi": 0.0,
+        "mimari_risk_skoru": 0.1
+      },
+      "feature_vector": [
+        3.0,
+        2.0,
+        6.2,
+        0.0,
+        0.0,
+        0.0,
+        0.1
+      ],
+      "oracle_probability": 0.000131,
+      "oracle_probability_4dec": 0.0001,
+      "oracle_Complement_probability": 0.999869,
+      "expected_decision": "otonom"
+    },
+    {
+      "id": "ornek_3_kalfa_sinirda",
+      "description": "Kabul Örneği 3: Orta zorlukta kararsızlık yaşayan kalfa profili",
+      "input": {
+        "deneyim_seviyesi": 2.0,
+        "sahne_zorlugu": 3.0,
+        "karar_suresi_sn": 21.0,
+        "secenek_degistirme_sayisi": 3.0,
+        "onceki_kritik_hata_sayisi": 1.0,
+        "acilan_ipucu_sayisi": 1.0,
+        "mimari_risk_skoru": 0.48
+      },
+      "feature_vector": [
+        2.0,
+        3.0,
+        21.0,
+        3.0,
+        1.0,
+        1.0,
+        0.48
+      ],
+      "oracle_probability": 0.739083,
+      "oracle_probability_4dec": 0.7391,
+      "oracle_Complement_probability": 0.260917,
+      "expected_decision": "mudahale"
+    },
+    {
+      "id": "ornek_4_aceleci_yuksek_risk",
+      "description": "Hızlı tıklayan ancak kritik hatalarla yüksek teknik borç biriktirmiş oyuncu",
+      "input": {
+        "deneyim_seviyesi": 1.0,
+        "sahne_zorlugu": 5.0,
+        "karar_suresi_sn": 11.5,
+        "secenek_degistirme_sayisi": 2.0,
+        "onceki_kritik_hata_sayisi": 3.0,
+        "acilan_ipucu_sayisi": 1.0,
+        "mimari_risk_skoru": 0.85
+      },
+      "feature_vector": [
+        1.0,
+        5.0,
+        11.5,
+        2.0,
+        3.0,
+        1.0,
+        0.85
+      ],
+      "oracle_probability": 0.947184,
+      "oracle_probability_4dec": 0.9472,
+      "oracle_Complement_probability": 0.052816,
+      "expected_decision": "mudahale"
+    },
+    {
+      "id": "ornek_5_dengeli_kalfa_akista",
+      "description": "Zor sahnede kontrollü düşünen ancak hata yapmamış dengeli kalfa",
+      "input": {
+        "deneyim_seviyesi": 2.0,
+        "sahne_zorlugu": 4.0,
+        "karar_suresi_sn": 14.0,
+        "secenek_degistirme_sayisi": 1.0,
+        "onceki_kritik_hata_sayisi": 0.0,
+        "acilan_ipucu_sayisi": 0.0,
+        "mimari_risk_skoru": 0.15
+      },
+      "feature_vector": [
+        2.0,
+        4.0,
+        14.0,
+        1.0,
+        0.0,
+        0.0,
+        0.15
+      ],
+      "oracle_probability": 0.038296,
+      "oracle_probability_4dec": 0.0383,
+      "oracle_Complement_probability": 0.961704,
+      "expected_decision": "otonom"
+    }
+  ]
+}

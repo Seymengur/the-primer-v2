@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Primer v2 — Uyarlamalı Yazılım Mühendisliği Hikâyesi & ONNX</title>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-card: #1e293b;
+    --bg-elevated: #0b1120;
+    --fg: #f8fafc;
+    --muted: #94a3b8;
+    --line: #334155;
+    --accent: #38bdf8;
+    --accent-hover: #0284c7;
+    --ok: #22c55e;
+    --ok-bg: rgba(34, 197, 94, 0.14);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245, 158, 11, 0.15);
+    --bad: #ef4444;
+    --bad-bg: rgba(239, 68, 68, 0.14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 18px; margin: 0 0 10px; }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+  }
+  .badge.ok { background: var(--ok-bg); color: #86efac; border-color: rgba(34,197,94,0.4); }
+  .badge.warn { background: var(--warn-bg); color: #fcd34d; border-color: rgba(245,158,11,0.45); }
+  .badge.info { background: rgba(56,189,248,0.14); color: #7dd3fc; border-color: rgba(56,189,248,0.4); }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .tab-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--fg);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #082f49;
+    border-color: var(--accent);
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 13px; font-weight: 600; color: var(--fg); }
+  .hint { display: block; color: var(--muted); font-size: 11.5px; margin-bottom: 2px; }
+  .error-msg { display: none; color: #fca5a5; font-size: 12px; margin-top: 3px; }
+
+  input, select {
+    font: inherit;
+    color: var(--fg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 8px 10px;
+  }
+  input:user-invalid,
+  input.user-invalid-fallback {
+    border-color: var(--bad);
+    background-color: var(--bad-bg);
+  }
+  input:user-invalid + .error-msg,
+  input.user-invalid-fallback + .error-msg {
+    display: block;
+  }
+  input:user-valid {
+    border-color: rgba(34, 197, 94, 0.55);
+  }
+
+  button.primary {
+    font: inherit;
+    font-weight: 600;
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #082f49;
+    cursor: pointer;
+  }
+  button.primary:hover { background: #7dd3fc; }
+  button.secondary {
+    font: inherit;
+    font-size: 13px;
+    padding: 7px 13px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--bg-elevated);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  button.secondary:hover { border-color: var(--accent); }
+
+  .choice-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .choice-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--fg);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .choice-item:hover { border-color: var(--accent); }
+  .choice-item.selected {
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.12);
+  }
+  .mentor-box {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(56, 189, 248, 0.10));
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 12px 0;
+  }
+  .scaffolding-box {
+    background: rgba(56, 189, 248, 0.09);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 13.5px;
+  }
+  .telemetry-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 12.5px;
+  }
+  .telemetry-bar div strong { display: block; font-size: 15px; color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+  th { color: var(--muted); font-weight: 600; }
+  pre {
+    margin: 0;
+    background: var(--bg-elevated);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 id="baslik">The Primer v2: Uyarlamalı Yazılım Mühendisliği Hikâyesi</h1>
+      <div class="muted" id="aciklama">ONNX modeli yükleniyor…</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <span id="engine-status" class="badge info" data-cy="engine-status">ONNX Hazırlanıyor</span>
+      <span class="badge ok">Seed: 13 · Eşik: 0.55</span>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Uygulama modları">
+    <button type="button" class="tab-btn active" data-tab="story" data-cy="tab-story">1. Etkileşimli Hikâye (Primer v2)</button>
+    <button type="button" class="tab-btn" data-tab="parity" data-cy="tab-parity">2. Diferansiyel Test & Parite Lab</button>
+    <button type="button" class="tab-btn" data-tab="data" data-cy="tab-data">3. Veri Toplama Modu (KVKK / CSV)</button>
+  </nav>
+
+  <!-- ==================== SEKME 1: ETKİLEŞİMLİ HİKÂYE ==================== -->
+  <section id="panel-story">
+    <!-- Aşama 1: 3 Soruluk Başlangıç Profili (v1 mirası) -->
+    <div id="onboarding-card" class="card" data-cy="onboarding-card">
+      <h2>Başlangıç Profili: Seni Tanıyalım (3 Soru)</h2>
+      <p class="muted">
+        Geçen haftaki <strong>The Primer v1</strong> girişindeki 3 soruya verdiğin yanıtlar başlangıç profilini belirler.
+        <strong>v2</strong>'de ise her sahnedeki gerçek zamanlı karar süren, seçenek değiştirme (tereddüt) sayın ve
+        teknik borç riskin <code>model.onnx</code> tarafından değerlendirilerek hikâye canlı uyarlanır.
+      </p>
+      <div class="grid-3" style="margin-top:14px;">
+        <div class="field">
+          <label for="q1-seviye">1. Yazılım Mühendisliği Deneyimin</label>
+          <span class="hint">Modelin <code>deneyim_seviyesi</code> girdisini belirler</span>
+          <select id="q1-seviye" data-cy="q1-select">
+            <option value="1">1 — Çırak (Junior / Öğrenci)</option>
+            <option value="2" selected>2 — Kalfa (Mid-Level Adayı)</option>
+            <option value="3">3 — Usta (Senior / Sistem Mimarı Adayı)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="q2-yaklasim">2. Üretimde Öncelikli Yaklaşımın</label>
+          <span class="hint">3V: Velocity mi Validation mı?</span>
+          <select id="q2-yaklasim" data-cy="q2-select">
+            <option value="0">Hızlı Prototipçi (Velocity Odaklı)</option>
+            <option value="1" selected>Doğrulamacı (Validation & Test Odaklı)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="q3-refleks">3. Canlı Sistem Kriz Refleksin</label>
+          <span class="hint">Prod çöktüğünde ilk adımın</span>
+          <select id="q3-refleks" data-cy="q3-select">
+            <option value="1">Log ve Telemetri Analizi</option>
+            <option value="2" selected>Commit'e Sabitli Rollback / Canary</option>
+            <option value="3">Canlıda Hızlı Yama (Hotfix)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button type="button" id="start-story-btn" class="primary" data-cy="start-story-btn">Hikâyeyi Başlat</button>
+        <span class="muted">Anonim Oturum Kimliği: <code id="session-id-label" data-cy="session-id">ses_...</code></span>
+      </div>
+    </div>
+
+    <!-- Aşama 2: Aktif Sahne ve Model Uyarlama Paneli -->
+    <div id="scene-card" class="card hidden" data-cy="scene-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <div>
+          <span class="badge info" id="scene-step-badge" data-cy="scene-number">Sahne 1 / 5</span>
+          <span class="badge" id="scene-difficulty-badge">Zorluk: 2/5</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="secondary" id="sim-hesitant-btn" data-cy="simulate-hesitant-btn" title="Demo ve test için tereddütlü oyuncu telemetrisi uygular">
+            🎭 Tereddütlü Oyuncu Simüle Et (Müdahale)
+          </button>
+          <button type="button" class="secondary" id="sim-autonomous-btn" data-cy="simulate-autonomous-btn" title="Demo ve test için hızlı/hatasız oyuncu telemetrisi uygular">
+            ⚡ Akıştaki Usta Simüle Et (Otonom)
+          </button>
+        </div>
+      </div>
+
+      <!-- Canlı Davranışsal Telemetri Çubuğu (7 Özellik) -->
+      <div class="telemetry-bar" aria-label="Canlı oyuncu telemetrisi">
+        <div>Seviye<strong id="tel-seviye">2</strong></div>
+        <div>Sahne Zorluğu<strong id="tel-zorluk">2</strong></div>
+        <div>Karar Süresi (sn)<strong id="tel-sure" data-cy="tel-sure">4.0</strong></div>
+        <div>Şık Değiştirme<strong id="tel-degisim" data-cy="tel-degisim">0</strong></div>
+        <div>Önceki Kritik Hata<strong id="tel-hata">0</strong></div>
+        <div>Açılan İpucu<strong id="tel-ipucu">0</strong></div>
+        <div>Mimari Risk Skoru<strong id="tel-risk">0.12</strong></div>
+      </div>
+
+      <!-- ONNX Model Kararı Durum Çubuğu -->
+      <div class="card" style="background:var(--bg-elevated); margin-bottom:14px; padding:12px 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <strong>ONNX Model Çıkarımı:</strong>
+            <code>P(mudahale_gerekli=1) = <span id="story-p" data-cy="story-p">0.0000</span></code>
+          </div>
+          <span id="adaptation-badge" class="badge ok" data-cy="adaptation-badge">Otonom Mühendis Modu (Akış)</span>
+        </div>
+        <div class="muted" id="shadow-log" data-cy="shadow-log" style="margin-top:6px; font-size:12px;">
+          [Shadow Deployment Karşılaştırması] v1 Kuralı vs. v2 ONNX Modeli hesaplanıyor…
+        </div>
+      </div>
+
+      <h2 id="scene-title" data-cy="scene-title">Sahne Başlığı</h2>
+      <p id="scene-narrative" data-cy="scene-narrative"></p>
+
+      <!-- Uyarlamalı Anlatım Derinliği (Adaptive Scaffolding - p >= 0.55 olduğunda açılır) -->
+      <div id="adaptive-scaffolding" class="scaffolding-box hidden" data-cy="adaptive-scaffolding">
+        <strong>📐 Uyarlamalı Derinlik — Mimari Ödünleşim Analizi:</strong>
+        <span id="scaffolding-text"></span>
+      </div>
+
+      <!-- Sokratik Mentor Müdahale Kartı (p >= 0.55 olduğunda otomatik açılır) -->
+      <div id="mentor-hint-card" class="mentor-box hidden" data-cy="mentor-hint-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>🧭 Sokratik Mentor Müdahalesi (Model Olasılığı &ge; 0.55)</strong>
+          <span class="badge warn">Tutor Koruması: Risk Cezası -%40</span>
+        </div>
+        <p id="mentor-hint-text" style="margin:6px 0 4px;"></p>
+        <div class="muted" id="mentor-ref-text"></div>
+      </div>
+
+      <!-- Karar Seçenekleri -->
+      <div class="choice-list" id="choice-list" data-cy="choice-list"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
+        <button type="button" id="request-hint-btn" class="secondary" data-cy="request-hint-btn">
+          💡 Sokratik İpucu İste (+1 İpucu Sayacı)
+        </button>
+        <button type="button" id="confirm-choice-btn" class="primary" data-cy="confirm-choice-btn">
+          Kararı Onayla ve Sonraki Sahneye Geç →
+        </button>
+      </div>
+    </div>
+
+    <!-- Aşama 3: Hikâye Sonu Mühendislik Karnesi (Regresyon E2E Bitiş Ekranı) -->
+    <div id="summary-card" class="card hidden" data-cy="summary-card">
+      <h2>🎓 The Primer v2 — Mühendislik Karnesi & Oturum Özeti</h2>
+      <p id="summary-outcome" data-cy="summary-outcome"></p>
+      <div class="grid-3" style="margin:14px 0;">
+        <div class="card" style="margin:0; background:var(--bg-elevated);">
+          <div class="muted">Son Mimari Risk Skoru</div>
+          <strong id="sum-risk" style="font-size:20px;">0.00</strong>
+        </div>
+        <div class="card" style="margin:0; background:var(--bg-elevated);">
+          <div class="muted">Toplam Kritik Hata</div>
+          <strong id="sum-errors" style="font-size:20px;">0</strong>
+        </div>
+        <div class="card" style="margin:0; background:var(--bg-elevated);">
+          <div class="muted">Sokratik Mentor Müdahalesi</div>
+          <strong id="sum-interventions" style="font-size:20px;">0 / 5 Sahne</strong>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" id="restart-story-btn" class="primary" data-cy="restart-story-btn">Yeni Oturum Başlat</button>
+        <button type="button" id="go-data-tab-btn" class="secondary">Toplanan Oturum Verisini Gör (CSV)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SEKME 2: DİFERANSİYEL TEST & PARİTE LAB ==================== -->
+  <section id="panel-parity" class="hidden">
+    <div class="card">
+      <h2>Diferansiyel Test (Parite Testi) ve Test Kahini (Oracle) Doğrulaması</h2>
+      <p class="muted">
+        Bu laboratuvar, tarayıcıdaki <code>onnxruntime-web</code> çıkarımı ile Python Test Kahini
+        (<code>tests/parite.py</code> → <code>tests/parite.json</code>) arasındaki farkın
+        <strong>hata toleransı <code>1e-4</code> ($10^{-4}$)</strong> altında olduğunu doğrular.
+        Cypress diferansiyel testi <code>[data-cy="p"]</code> alanını doğrudan okur.
+      </p>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;">
+        <button type="button" class="secondary" data-case-idx="0" data-cy="load-case-0">Örnek 1 (Tereddütlü Çırak)</button>
+        <button type="button" class="secondary" data-case-idx="1" data-cy="load-case-1">Örnek 2 (Otonom Usta)</button>
+        <button type="button" class="secondary" data-case-idx="2" data-cy="load-case-2">Örnek 3 (Sınırda Kalfa)</button>
+        <button type="button" class="secondary" data-case-idx="3" data-cy="load-case-3">Örnek 4 (Aceleci Yüksek Risk)</button>
+        <button type="button" class="secondary" data-case-idx="4" data-cy="load-case-4">Örnek 5 (Dengeli Kalfa)</button>
+        <button type="button" class="primary" id="run-all-parity-btn" data-cy="run-all-parity-btn">
+          ✓ 5 Referans Girdiyle Parite Tablosunu Doğrula
+        </button>
+      </div>
+
+      <form id="form" class="grid-3" novalidate></form>
+      <div style="margin-top:14px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <button type="submit" form="form" id="tahmin" class="primary" data-cy="predict-btn">Tahmin et</button>
+        <div>
+          Olasılık <code>P(mudahale_gerekli=1)</code>:
+          <strong id="p-deger" data-cy="p" style="font-size:18px; color:var(--accent);">0.000000</strong>
+          <span id="p-karar-rozet" class="badge info" style="margin-left:8px;">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>5 Referans Girdi — Python Oracle vs. Tarayıcı (`onnxruntime-web`) Parite Tablosu</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Senaryo ID</th>
+            <th>Python Oracle <code>P(1)</code></th>
+            <th>Tarayıcı ONNX <code>P(1)</code></th>
+            <th>Mutlak Fark <code>|Δ|</code></th>
+            <th>Tolerans (<code>&lt; 1e-4</code>)</th>
+          </tr>
+        </thead>
+        <tbody id="parity-table-body" data-cy="parity-table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="card muted">
+      Kaynak: <code id="kaynak">./model/</code><br>
+      Ham Çıktı:
+      <pre id="ham">—</pre>
+    </div>
+  </section>
+
+  <!-- ==================== SEKME 3: VERİ TOPLAMA MODU (KVKK / CSV) ==================== -->
+  <section id="panel-data" class="hidden">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2>Veri Toplama Modu (`kaynak = gercek`) & KVKK Uyumlu Oturum Kaydı</h2>
+          <p class="muted" style="margin:0;">
+            Kişisel veri (ad, e-posta, IP, cihaz kimliği) toplanmaz. Her sahne kararı anonim <code>oturum_id</code> ile kaydedilir.
+          </p>
+        </div>
+        <button type="button" id="export-csv-btn" class="primary" data-cy="export-csv-btn">
+          ⬇️ Oturum Verisini CSV İndir (`oturumlar.csv` Formatında)
+        </button>
+      </div>
+      <table style="margin-top:14px;">
+        <thead>
+          <tr>
+            <th>oturum_id</th>
+            <th>sahne_no</th>
+            <th>seviye</th>
+            <th>zorluk</th>
+            <th>sure_sn</th>
+            <th>degisim</th>
+            <th>hata</th>
+            <th>ipucu</th>
+            <th>risk</th>
+            <th>mudahale</th>
+            <th>kaynak</th>
+          </tr>
+        </thead>
+        <tbody id="telemetry-log-body" data-cy="telemetry-log-body"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
+
+// 5 Sahnelik Yazılım Mühendisliği Hikâyesi (The Primer v1 + v2)
+const SAHNELER = [
+  {
+    no: 1,
+    zorluk: 2,
+    baslik: "Sahne 1: 21. Adım Sendromu ve Sessiz Regresyon",
+    anlatim: "Canlıya aldığın kural tabanlı karar motoru ilk 20 kullanıcı adımında kusursuz çalışırken 21. adımda float32 yuvarlama farkı yüzünden yanlış dala sapıyor. Ekip lideri hemen çözüm bekliyor.",
+    scaffolding: "Regresyon hatalarında mevcut davranışı sabitleyen bir Karakterizasyon Testi (Characterization Test) yazmadan kodu değiştirmek, çalışan ilk 20 adımı da bozma riski taşır (Sommerville, Bl. 8).",
+    ipucu: "Sokratik Soru: Hangi girdide sapma olduğunu bilmeden doğrudan eşik değerini değiştirmek yeni bir regresyon yaratmaz mı? Önce sınır değerini yakalayan otomatik bir regresyon testi eklemeyi düşün.",
+    referans: "Kaynak: Sommerville (2015), Software Engineering 10e — Bl. 8 Regression Testing.",
+    secenekler: [
+      { metin: "Önce 21. adımı yeniden üreten otomatik bir regresyon ve sınır değer testi yaz, ardından düzeltmeyi uygula.", riskDelta: -0.04, hataMi: false },
+      { metin: "Üretimde hızlıca eşik değerine +0.05 ekleyip (hotfix) test yazmadan deploy et.", riskDelta: 0.24, hataMi: true },
+      { metin: "21. adımı loglardan gizleyip kullanıcıyı başlangıç ekranına yönlendir.", riskDelta: 0.30, hataMi: true }
+    ]
+  },
+  {
+    no: 2,
+    zorluk: 3,
+    baslik: "Sahne 2: Gölgede Kalan Model (Shadow vs. Canary Dağıtım)",
+    anlatim: "Yeni eğittiğin ONNX modelinin test AUC skoru 0.94 çıktı. Ancak gerçek oyuncu trafiğinde nasıl davranacağını henüz görmedin. Modeli tüm kullanıcılara nasıl devreye alırsın?",
+    scaffolding: "Eğitim kümesindeki yüksek doğruluk üretimde tek başına yeterli değildir (Shankar vd., 2022 - 3V). Önce Gölge Dağıtım (Shadow Mode) ile gerçek veride sessizce çalıştırıp ardından %5 Canary ile kademeli açmak güvenli geri dönüş sağlar.",
+    ipucu: "Sokratik Soru: Modeli bir anda %100 trafiğe açarsan ve beklenmedik bir dağılım kayması (data drift) yaşanırsa oyuncuları nasıl korursun? Shadow → %5 Canary → Progressive Rollout zincirini hatırla.",
+    referans: "Kaynak: Amershi vd. (2019) & Shankar vd. (2022) — Operationalizing ML (Velocity, Validation, Versioning).",
+    secenekler: [
+      { metin: "Önce Shadow Mode ile v1 kurallarıyla paralel çalıştırıp farkları kaydet, sonra %5 Canary ile kademeli devreye al.", riskDelta: -0.05, hataMi: false },
+      { metin: "Test AUC yüksek olduğu için doğrudan %100 trafiğe aç ve eski v1 kodunu sil.", riskDelta: 0.26, hataMi: true },
+      { metin: "Modeli yalnızca gece yarısı 02:00-05:00 arasında %100 trafiğe aç.", riskDelta: 0.18, hataMi: true }
+    ]
+  },
+  {
+    no: 3,
+    zorluk: 2,
+    baslik: "Sahne 3: 'Bu Çağın Madeni Veridir' — KVKK ve Telemetri İkilemi",
+    anlatim: "Modeli iyileştirmek için oyunculardan gerçek oturum verisi (data/oturumlar.csv) toplaman gerekiyor. Analitik ekibi, oyuncunun e-posta adresini ve cihaz MAC kimliğini de kaydetmeyi öneriyor.",
+    scaffolding: "Modelin eğitimi için yalnızca davranışsal özellikler (karar süresi, şık değiştirme sayısı, sahne zorluğu) yeterlidir. Kişisel verilerin toplanması hem KVKK ihlalidir hem de modelin genelleme yeteneğine katkı sağlamaz.",
+    ipucu: "Sokratik Soru: Modelin 'ipucu gerekir mi?' kararını vermesi için oyuncunun kim olduğunu bilmesine gerçekten ihtiyaç var mı, yoksa rastgele üretilmiş anonim bir oturum_id yeterli mi?",
+    referans: "Kaynak: Mitchell vd. (2019), Model Cards for Model Reporting & KVKK Veri Minimizasyonu İlkesi.",
+    secenekler: [
+      { metin: "Kişisel verileri reddet; yalnızca anonim oturum_id ve 7 davranışsal telemetri özelliğini kaynak='gercek' etiketiyle kaydet.", riskDelta: -0.04, hataMi: false },
+      { metin: "E-posta ve cihaz kimliğini düz metin olarak CSV'ye kaydet ve GitHub'da public yayınla.", riskDelta: 0.32, hataMi: true },
+      { metin: "Gerçek veri toplamaktan tamamen vazgeçip yalnızca rastgele sayılarla model eğit.", riskDelta: 0.20, hataMi: true }
+    ]
+  },
+  {
+    no: 4,
+    zorluk: 4,
+    baslik: "Sahne 4: Test Kahini (Oracle) ve Diferansiyel Parite Sınavı",
+    anlatim: "Python'da eğittiğin model.onnx dosyasını tarayıcıda onnxruntime-web ile çalıştırdın. Aynı referans girdide Python 0.8912 verirken tarayıcı 0.7400 veriyor! Ne yaparsın?",
+    scaffolding: "İki farklı çalışma ortamı (Python Oracle vs. Web ONNX) aynı model ve aynı özellik sırasıyla < 1e-4 tolerans dahilinde aynı olasılığı üretmelidir. Büyük farklar genellikle config.json içindeki özellik sırasının veya float32 dönüşümünün uyuşmamasından kaynaklanır.",
+    ipucu: "Sokratik Soru: Model ağırlıkları aynıysa neden iki ortam farklı sonuç verir? Girdi vektörünün config.json'daki features sırasıyla birebir aynı dizildiğini ve 5 referans girdiyle diferansiyel parite testini kontrol ettin mi?",
+    referans: "Kaynak: Breck vd. (2017), The ML Test Score — Training/Serving Skew & Differential Testing.",
+    secenekler: [
+      { metin: "config.json sözleşmesindeki özellik sırasını sabitle ve Cypress ile 5 referans girdide |p_web - p_oracle| < 1e-4 diferansiyel parite testi kur.", riskDelta: -0.06, hataMi: false },
+      { metin: "Tarayıcıdaki çıktıyı 1.20 ile çarparak Python sonucuna yaklaştır.", riskDelta: 0.28, hataMi: true },
+      { metin: "Farkı görmezden gelip hata toleransını 1e-4 yerine 0.25 olarak değiştir.", riskDelta: 0.25, hataMi: true }
+    ]
+  },
+  {
+    no: 5,
+    zorluk: 5,
+    baslik: "Sahne 5: Sürüm Sabitleme (Commit Pinning) ve Gece Yarısı Rollback",
+    anlatim: "Ekip arkadaşın Hugging Face reposundaki main dalına yanlışlıkla bozuk bir model.onnx yükledi. Canlıdaki web uygulaması modeli doğrudan /resolve/main/model.onnx adresinden çektiği için tüm istemciler çöktü!",
+    scaffolding: "Tüketiciler modeli asla hareketli 'main' dalından çekmemelidir. Her sürüm değişmez bir commit SHA özetine (/resolve/<commit>/model.onnx) sabitlenmeli ve RELEASE.md içinde tek adımlık Rollback planı hazır tutulmalıdır.",
+    ipucu: "Sokratik Soru: Üretimdeki bir istemci neden hareketli bir dala ('main') bağımlı olsun? URL'yi doğrulanmış commit SHA adresine sabitleyip (pinning) önceki sağlam commit'e anında geri dönmek (Rollback) sorunu kalıcı çözmez mi?",
+    referans: "Kaynak: Sommerville Bl. 25 Configuration Management & Hugging Face Hub Revision Pinning.",
+    secenekler: [
+      { metin: "İstemci URL'sini doğrulanmış commit SHA'sına (/resolve/<commit>/model.onnx) sabitle ve RELEASE.md prosedürüyle sağlam sürüme Rollback yap.", riskDelta: -0.06, hataMi: false },
+      { metin: "Yeni bir model eğitilene kadar uygulamayı birkaç saat kapat.", riskDelta: 0.22, hataMi: true },
+      { metin: "Tarayıcıda model yüklenemezse rastgele Math.random() ile karar üret.", riskDelta: 0.30, hataMi: true }
+    ]
+  }
+];
+
+let config = null;
+let oturum = null;
+let pariteVerisi = null;
+let toplananSatirlar = [];
+
+// Aktif Hikâye Durumu
+let oyun = {
+  oturumId: "ses_g19_" + Math.random().toString(16).slice(2, 6),
+  seviye: 2,
+  yaklasim: 1,
+  refleks: 2,
+  sahneIdx: 0,
+  sahneBaslangicMs: 0,
+  manuelSureSn: null,
+  seciliSecenekIdx: 0,
+  secenekDegistirme: 0,
+  kritikHataSayisi: 0,
+  acilanIpucuSayisi: 0,
+  mimariRiskSkoru: 0.12,
+  sonOlasilik: 0.0,
+  mudahaleSayisi: 0,
+  timerId: null
+};
+
+// Modern Web Guidance: validate-input-after-interaction (:user-invalid fallback & ARIA sync)
+const UserInvalidFallback = (() => {
+  const dirtyState = new WeakMap();
+  const syncAria = (el) => {
+    if (!el || typeof el.checkValidity !== "function") return;
+    const isInvalid = el.matches?.(":user-invalid") || (!el.checkValidity() && dirtyState.get(el)?.hasBlurred);
+    el.setAttribute("aria-invalid", isInvalid ? "true" : "false");
+  };
+  const init = (root = document) => {
+    root.addEventListener("blur", (e) => {
+      const s = dirtyState.get(e.target) || {};
+      s.hasBlurred = true;
+      dirtyState.set(e.target, s);
+      syncAria(e.target);
+    }, true);
+    root.addEventListener("input", (e) => {
+      const s = dirtyState.get(e.target) || {};
+      s.hasInteracted = true;
+      dirtyState.set(e.target, s);
+      if (e.target.hasAttribute?.("aria-invalid")) syncAria(e.target);
+    });
+  };
+  return { init };
+})();
+
+async function jsonGetir(yollar) {
+  for (const yol of yollar) {
+    try {
+      const r = await fetch(yol, { cache: "no-store" });
+      if (r.ok) return { veri: await r.json(), kaynak: yol };
+    } catch (_) {}
+  }
+  throw new Error("Dosya bulunamadı: " + yollar.join(", "));
+}
+
+// ONNX Çıkarımı (Tarayıcıda onnxruntime-web ile gerçek model.onnx çalıştırır)
+async function onnxTahminEt(girdiNesnesi) {
+  const sira = config.features.map(f => f.name);
+  const floatDizi = Float32Array.from(sira.map(ad => Number(girdiNesnesi[ad])));
+
+  if (oturum) {
+    const tensor = new ort.Tensor("float32", floatDizi, [1, sira.length]);
+    const cikti = await oturum.run({ input: tensor });
+    const pDizi = Array.from(cikti.probabilities.data);
+    return { p0: Number(pDizi[0]), p1: Number(pDizi[1]), motor: "onnxruntime-web" };
+  }
+
+  throw new Error("ONNX oturumu henüz hazır değil");
+}
+
+async function yukle() {
+  document.getElementById("session-id-label").textContent = oyun.oturumId;
+  try {
+    let siteBilgi = null;
+    try {
+      const sRes = await jsonGetir(["./site.json", "./web/site.json"]);
+      siteBilgi = sRes.veri;
+    } catch (_) {}
+
+    const cfgYollar = [];
+    if (siteBilgi && siteBilgi.pinned_config_url) cfgYollar.push(siteBilgi.pinned_config_url);
+    cfgYollar.push("./model/config.json", "../model/config.json");
+
+    const cfgSonuc = await jsonGetir(cfgYollar);
+    config = cfgSonuc.veri;
+    const modelUrl = cfgSonuc.kaynak.replace("config.json", "model.onnx");
+    document.getElementById("kaynak").textContent = modelUrl;
+
+    oturum = await ort.InferenceSession.create(modelUrl);
+    document.getElementById("engine-status").textContent = "✓ ONNX Runtime Web Aktif";
+    document.getElementById("engine-status").className = "badge ok";
+    document.getElementById("aciklama").textContent =
+      `${config.description} · Test AUC: ${config.metrics.auc} · Accuracy: ${config.metrics.accuracy} · ONNX Fark: ${config.metrics.onnx_max_diff}`;
+  } catch (e) {
+    document.getElementById("aciklama").textContent = `✗ Model yüklenemedi: ${e.message}`;
+    return;
+  }
+
+  try {
+    const pSonuc = await jsonGetir(["./parite.json", "../tests/parite.json"]);
+    pariteVerisi = pSonuc.veri;
+  } catch (_) {}
+
+  pariteFormunuKur();
+  UserInvalidFallback.init(document);
+  if (pariteVerisi && pariteVerisi.cases.length > 0) {
+    await pariteSenaryosuYukle(0);
+    await tumPariteTablosunuCalistir();
+  }
+}
+
+// ==================== PARİTE LAB FONKSİYONLARI ====================
+function pariteFormunuKur() {
+  const formEl = document.getElementById("form");
+  formEl.innerHTML = config.features.map(o => `
+    <div class="field">
+      <label for="inp-${o.name}">${o.label}</label>
+      <span id="hint-${o.name}" class="hint">Birim: ${o.unit || "sayı"} (Aralık: ${o.min ?? 0} – ${o.max ?? 100})</span>
+      <input
+        type="number"
+        step="any"
+        id="inp-${o.name}"
+        name="${o.name}"
+        min="${o.min ?? 0}"
+        max="${o.max ?? 100}"
+        value="${o.example}"
+        required
+        aria-describedby="hint-${o.name}"
+        aria-errormessage="err-${o.name}"
+      >
+      <div id="err-${o.name}" class="error-msg">Lütfen ${o.min ?? 0} ile ${o.max ?? 100} arasında geçerli bir değer girin.</div>
+    </div>
+  `).join("");
+}
+
+async function pariteFormuTahminEt(e) {
+  if (e) e.preventDefault();
+  const formVeri = new FormData(document.getElementById("form"));
+  const girdi = Object.fromEntries(config.features.map(o => [o.name, Number(formVeri.get(o.name))]));
+  const sonuc = await onnxTahminEt(girdi);
+  const p1 = sonuc.p1;
+  const esik = Number(config.decision_threshold || 0.55);
+
+  const pEl = document.getElementById("p-deger");
+  pEl.textContent = p1.toFixed(6);
+
+  const rozet = document.getElementById("p-karar-rozet");
+  if (p1 >= esik) {
+    rozet.textContent = "Sokratik Mentor Müdahalesi (1)";
+    rozet.className = "badge warn";
+  } else {
+    rozet.textContent = "Otonom Akış (0)";
+    rozet.className = "badge ok";
+  }
+
+  document.getElementById("ham").textContent = JSON.stringify({
+    engine: sonuc.motor,
+    input: girdi,
+    probability: Number(p1.toFixed(6)),
+    decision: p1 >= esik ? "mudahale" : "otonom"
+  }, null, 2);
+  return p1;
+}
+
+async function pariteSenaryosuYukle(idx) {
+  if (!pariteVerisi || !pariteVerisi.cases[idx]) return;
+  const vaka = pariteVerisi.cases[idx];
+  for (const o of config.features) {
+    const inp = document.getElementById(`inp-${o.name}`);
+    if (inp) inp.value = vaka.input[o.name];
+  }
+  await pariteFormuTahminEt();
+}
+
+async function tumPariteTablosunuCalistir() {
+  if (!pariteVerisi) return;
+  const tbody = document.getElementById("parity-table-body");
+  const satirlar = [];
+  for (const vaka of pariteVerisi.cases) {
+    const sonuc = await onnxTahminEt(vaka.input);
+    const fark = Math.abs(sonuc.p1 - vaka.oracle_probability);
+    const gecti = fark < 1e-4;
+    satirlar.push(`
+      <tr data-cy="parity-row-${vaka.id}">
+        <td><code>${vaka.id}</code></td>
+        <td>${vaka.oracle_probability.toFixed(6)}</td>
+        <td data-cy="web-p-${vaka.id}">${sonuc.p1.toFixed(6)}</td>
+        <td data-cy="diff-${vaka.id}">${fark.toExponential(2)}</td>
+        <td><span class="badge ${gecti ? "ok" : "warn"}">${gecti ? "✓ < 1e-4" : "✗ Aşıldı"}</span></td>
+      </tr>
+    `);
+  }
+  tbody.innerHTML = satirlar.join("");
+}
+
+// ==================== ETKİLEŞİMLİ HİKÂYE FONKSİYONLARI ====================
+function aktifKararSuresiSn() {
+  if (oyun.manuelSureSn !== null) return oyun.manuelSureSn;
+  const gecen = (performance.now() - oyun.sahneBaslangicMs) / 1000;
+  return Math.max(1.5, Math.min(60.0, Number(gecen.toFixed(1))));
+}
+
+function aktifGirdiVektoru() {
+  const sahne = SAHNELER[oyun.sahneIdx];
+  return {
+    deneyim_seviyesi: Number(oyun.seviye),
+    sahne_zorlugu: Number(sahne.zorluk),
+    karar_suresi_sn: aktifKararSuresiSn(),
+    secenek_degistirme_sayisi: Number(oyun.secenekDegistirme),
+    onceki_kritik_hata_sayisi: Number(oyun.kritikHataSayisi),
+    acilan_ipucu_sayisi: Number(oyun.acilanIpucuSayisi),
+    mimari_risk_skoru: Number(oyun.mimariRiskSkoru.toFixed(2))
+  };
+}
+
+async function sahneModeliDegerlendir() {
+  if (!config || !oturum) return;
+  const girdi = aktifGirdiVektoru();
+
+  document.getElementById("tel-seviye").textContent = girdi.deneyim_seviyesi;
+  document.getElementById("tel-zorluk").textContent = girdi.sahne_zorlugu;
+  document.getElementById("tel-sure").textContent = girdi.karar_suresi_sn.toFixed(1);
+  document.getElementById("tel-degisim").textContent = girdi.secenek_degistirme_sayisi;
+  document.getElementById("tel-hata").textContent = girdi.onceki_kritik_hata_sayisi;
+  document.getElementById("tel-ipucu").textContent = girdi.acilan_ipucu_sayisi;
+  document.getElementById("tel-risk").textContent = girdi.mimari_risk_skoru.toFixed(2);
+
+  const sonuc = await onnxTahminEt(girdi);
+  oyun.sonOlasilik = sonuc.p1;
+  const esik = Number(config.decision_threshold || 0.55);
+  const mudahaleAktif = sonuc.p1 >= esik;
+
+  document.getElementById("story-p").textContent = sonuc.p1.toFixed(4);
+  const rozet = document.getElementById("adaptation-badge");
+  const mentorKart = document.getElementById("mentor-hint-card");
+  const scaffoldingKart = document.getElementById("adaptive-scaffolding");
+
+  // v1 Sabit Kuralı (Shadow Mode karşılaştırması için: yalnızca seviye==1 ise ipucu veriyordu)
+  const v1Karar = oyun.seviye === 1 ? "Müdahale (Sabit Seviye=1 Kuralı)" : "Otonom (Sabit Kural)";
+  const v2Karar = mudahaleAktif ? "Sokratik Müdahale (ONNX Davranışsal)" : "Otonom Akış (ONNX Davranışsal)";
+  document.getElementById("shadow-log").textContent =
+    `[Shadow Mode] v1 Kuralı: ${v1Karar}  |  v2 ONNX (p=${sonuc.p1.toFixed(4)}): ${v2Karar}`;
+
+  if (mudahaleAktif) {
+    rozet.textContent = "Sokratik Mentor Müdahalesi Aktif";
+    rozet.className = "badge warn";
+    mentorKart.classList.remove("hidden");
+    scaffoldingKart.classList.remove("hidden");
+  } else {
+    rozet.textContent = "Otonom Mühendis Modu (Akış)";
+    rozet.className = "badge ok";
+    mentorKart.classList.add("hidden");
+    scaffoldingKart.classList.add("hidden");
+  }
+
+  // Riskli seçeneklerdeki görsel uyarı rozetlerini güncelle
+  document.querySelectorAll(".risk-warning-pill").forEach(el => {
+    el.classList.toggle("hidden", !mudahaleAktif);
+  });
+}
+
+async function sahneyiCiz() {
+  const sahne = SAHNELER[oyun.sahneIdx];
+  oyun.sahneBaslangicMs = performance.now() - 4000; // Başlangıç okuma süresi 4.0 sn
+  oyun.manuelSureSn = null;
+  oyun.seciliSecenekIdx = 0;
+  oyun.secenekDegistirme = 0;
+
+  document.getElementById("scene-step-badge").textContent = `Sahne ${sahne.no} / ${SAHNELER.length}`;
+  document.getElementById("scene-difficulty-badge").textContent = `Zorluk: ${sahne.zorluk}/5`;
+  document.getElementById("scene-title").textContent = sahne.baslik;
+  document.getElementById("scene-narrative").textContent = sahne.anlatim;
+  document.getElementById("scaffolding-text").textContent = sahne.scaffolding;
+  document.getElementById("mentor-hint-text").textContent = sahne.ipucu;
+  document.getElementById("mentor-ref-text").textContent = sahne.referans;
+
+  const liste = document.getElementById("choice-list");
+  liste.innerHTML = sahne.secenekler.map((sec, idx) => `
+    <button
+      type="button"
+      class="choice-item ${idx === 0 ? "selected" : ""}"
+      data-choice-idx="${idx}"
+      data-cy="choice-${idx}"
+    >
+      <span>${sec.metin}</span>
+      ${sec.hataMi ? `<span class="badge warn risk-warning-pill hidden">⚠️ Yüksek Teknik Borç Riski</span>` : ""}
+    </button>
+  `).join("");
+
+  liste.querySelectorAll(".choice-item").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const yeniIdx = Number(btn.getAttribute("data-choice-idx"));
+      if (yeniIdx !== oyun.seciliSecenekIdx) {
+        oyun.seciliSecenekIdx = yeniIdx;
+        oyun.secenekDegistirme += 1;
+        liste.querySelectorAll(".choice-item").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        await sahneModeliDegerlendir();
+      }
+    });
+  });
+
+  await sahneModeliDegerlendir();
+}
+
+function hikayeyiBaslat() {
+  oyun.oturumId = "ses_g" + Math.floor(20 + Math.random() * 79) + "_" + Math.random().toString(16).slice(2, 6);
+  oyun.seviye = Number(document.getElementById("q1-seviye").value);
+  oyun.yaklasim = Number(document.getElementById("q2-yaklasim").value);
+  oyun.refleks = Number(document.getElementById("q3-refleks").value);
+  oyun.sahneIdx = 0;
+  oyun.kritikHataSayisi = 0;
+  oyun.acilanIpucuSayisi = 0;
+  oyun.mudahaleSayisi = 0;
+  oyun.mimariRiskSkoru = oyun.yaklasim === 0 ? 0.22 : 0.10;
+
+  document.getElementById("session-id-label").textContent = oyun.oturumId;
+  document.getElementById("onboarding-card").classList.add("hidden");
+  document.getElementById("summary-card").classList.add("hidden");
+  document.getElementById("scene-card").classList.remove("hidden");
+
+  if (oyun.timerId) clearInterval(oyun.timerId);
+  oyun.timerId = setInterval(() => {
+    if (!document.getElementById("scene-card").classList.contains("hidden") && oyun.manuelSureSn === null) {
+      sahneModeliDegerlendir();
+    }
+  }, 1000);
+
+  sahneyiCiz();
+}
+
+async function karariOnayla() {
+  const sahne = SAHNELER[oyun.sahneIdx];
+  const secim = sahne.secenekler[oyun.seciliSecenekIdx];
+  const girdi = aktifGirdiVektoru();
+  const esik = Number(config?.decision_threshold || 0.55);
+  const mudahaleOldu = oyun.sonOlasilik >= esik;
+
+  if (mudahaleOldu) oyun.mudahaleSayisi += 1;
+
+  // Telemetri satırını kaydet (data/oturumlar.csv sözleşmesiyle birebir aynı)
+  const satir = {
+    oturum_id: oyun.oturumId,
+    sahne_no: sahne.no,
+    deneyim_seviyesi: girdi.deneyim_seviyesi,
+    sahne_zorlugu: girdi.sahne_zorlugu,
+    karar_suresi_sn: girdi.karar_suresi_sn,
+    secenek_degistirme_sayisi: girdi.secenek_degistirme_sayisi,
+    onceki_kritik_hata_sayisi: girdi.onceki_kritik_hata_sayisi,
+    acilan_ipucu_sayisi: girdi.acilan_ipucu_sayisi,
+    mimari_risk_skoru: girdi.mimari_risk_skoru,
+    mudahale_gerekli: mudahaleOldu ? 1 : 0,
+    kaynak: "gercek"
+  };
+  toplananSatirlar.push(satir);
+  telemetriTablosunuGuncelle();
+
+  // Durumu sonraki sahne için güncelle (Sokratik müdahale aktifse hata cezası %40 yumuşatılır)
+  if (secim.hataMi) {
+    oyun.kritikHataSayisi = Math.min(5, oyun.kritikHataSayisi + 1);
+    const ceza = mudahaleOldu ? secim.riskDelta * 0.6 : secim.riskDelta;
+    oyun.mimariRiskSkoru = Math.min(0.98, Math.max(0.04, oyun.mimariRiskSkoru + ceza));
+  } else {
+    oyun.mimariRiskSkoru = Math.min(0.98, Math.max(0.04, oyun.mimariRiskSkoru + secim.riskDelta));
+  }
+
+  if (oyun.sahneIdx + 1 < SAHNELER.length) {
+    oyun.sahneIdx += 1;
+    await sahneyiCiz();
+  } else {
+    hikayeyiBitir();
+  }
+}
+
+function hikayeyiBitir() {
+  if (oyun.timerId) clearInterval(oyun.timerId);
+  document.getElementById("scene-card").classList.add("hidden");
+  document.getElementById("summary-card").classList.remove("hidden");
+
+  document.getElementById("sum-risk").textContent = oyun.mimariRiskSkoru.toFixed(2);
+  document.getElementById("sum-errors").textContent = String(oyun.kritikHataSayisi);
+  document.getElementById("sum-interventions").textContent = `${oyun.mudahaleSayisi} / ${SAHNELER.length} Sahne`;
+
+  const basarili = oyun.mimariRiskSkoru < 0.45 && oyun.kritikHataSayisi <= 1;
+  document.getElementById("summary-outcome").textContent = basarili
+    ? "Tebrikler! Üretim hattını düşük teknik borç, tam diferansiyel parite (< 1e-4) ve güvenli sürümleme ile canlıya aldın."
+    : "Oturum tamamlandı! Sokratik Mentor müdahaleleriyle kritik virajları gördün; teknik borcu düşürmek için yeni bir oturum deneyebilirsin.";
+}
+
+function telemetriTablosunuGuncelle() {
+  const tbody = document.getElementById("telemetry-log-body");
+  tbody.innerHTML = toplananSatirlar.map(s => `
+    <tr>
+      <td><code>${s.oturum_id}</code></td>
+      <td>${s.sahne_no}</td>
+      <td>${s.deneyim_seviyesi}</td>
+      <td>${s.sahne_zorlugu}</td>
+      <td>${s.karar_suresi_sn}</td>
+      <td>${s.secenek_degistirme_sayisi}</td>
+      <td>${s.onceki_kritik_hata_sayisi}</td>
+      <td>${s.acilan_ipucu_sayisi}</td>
+      <td>${s.mimari_risk_skoru}</td>
+      <td>${s.mudahale_gerekli}</td>
+      <td><code>${s.kaynak}</code></td>
+    </tr>
+  `).join("");
+}
+
+function csvIndir() {
+  const basliklar = [
+    "oturum_id","sahne_no","deneyim_seviyesi","sahne_zorlugu","karar_suresi_sn",
+    "secenek_degistirme_sayisi","onceki_kritik_hata_sayisi","acilan_ipucu_sayisi",
+    "mimari_risk_skoru","mudahale_gerekli","kaynak"
+  ];
+  const satirDizileri = [
+    basliklar.join(","),
+    ...toplananSatirlar.map(s => basliklar.map(k => s[k]).join(","))
+  ];
+  const blob = new Blob([satirDizileri.join("\n") + "\n"], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `oturumlar_${oyun.oturumId}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== OLAY DİNLEYİCİLERİ ====================
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const hedef = btn.getAttribute("data-tab");
+    document.getElementById("panel-story").classList.toggle("hidden", hedef !== "story");
+    document.getElementById("panel-parity").classList.toggle("hidden", hedef !== "parity");
+    document.getElementById("panel-data").classList.toggle("hidden", hedef !== "data");
+  });
+});
+
+document.getElementById("start-story-btn").addEventListener("click", hikayeyiBaslat);
+document.getElementById("confirm-choice-btn").addEventListener("click", karariOnayla);
+document.getElementById("restart-story-btn").addEventListener("click", () => {
+  document.getElementById("summary-card").classList.add("hidden");
+  document.getElementById("onboarding-card").classList.remove("hidden");
+});
+document.getElementById("go-data-tab-btn").addEventListener("click", () => {
+  document.querySelector('[data-tab="data"]').click();
+});
+document.getElementById("request-hint-btn").addEventListener("click", async () => {
+  oyun.acilanIpucuSayisi = Math.min(5, oyun.acilanIpucuSayisi + 1);
+  document.getElementById("mentor-hint-card").classList.remove("hidden");
+  await sahneModeliDegerlendir();
+});
+
+// Demo & Test Hızlı Simülasyon Butonları (Aynı sahnede iki farklı oyuncu davranışını anında gösterir)
+document.getElementById("sim-hesitant-btn").addEventListener("click", async () => {
+  oyun.seviye = 1;
+  oyun.manuelSureSn = 36.5;
+  oyun.secenekDegistirme = 5;
+  oyun.kritikHataSayisi = 2;
+  oyun.acilanIpucuSayisi = 2;
+  oyun.mimariRiskSkoru = 0.74;
+  await sahneModeliDegerlendir();
+});
+
+document.getElementById("sim-autonomous-btn").addEventListener("click", async () => {
+  oyun.seviye = 3;
+  oyun.manuelSureSn = 5.5;
+  oyun.secenekDegistirme = 0;
+  oyun.kritikHataSayisi = 0;
+  oyun.acilanIpucuSayisi = 0;
+  oyun.mimariRiskSkoru = 0.08;
+  await sahneModeliDegerlendir();
+});
+
+document.getElementById("form").addEventListener("submit", pariteFormuTahminEt);
+document.querySelectorAll("[data-case-idx]").forEach(btn => {
+  btn.addEventListener("click", () => pariteSenaryosuYukle(Number(btn.getAttribute("data-case-idx"))));
+});
+document.getElementById("run-all-parity-btn").addEventListener("click", tumPariteTablosunuCalistir);
+document.getElementById("export-csv-btn").addEventListener("click", csvIndir);
+
+yukle();
+</script>
+</body>
+</html>

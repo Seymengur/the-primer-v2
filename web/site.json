@@ -1,0 +1,7 @@
+{
+  "model_repo": "Seymen55/the-primer-v2-onnx",
+  "commit": "846390dc7ad50af1e942307346bfd0e8e93824a2",
+  "pinned_model_url": "https://huggingface.co/Seymen55/the-primer-v2-onnx/resolve/846390dc7ad50af1e942307346bfd0e8e93824a2/model.onnx",
+  "pinned_config_url": "https://huggingface.co/Seymen55/the-primer-v2-onnx/resolve/846390dc7ad50af1e942307346bfd0e8e93824a2/config.json",
+  "local_fallback": true
+}

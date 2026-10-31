@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The Primer v2 — Sokratik Mentor Uyarlama Modeli",
+  "version": "2.0.0",
+  "description": "Oyuncunun sahne içi karar süresi, seçenek değiştirme (tereddüt) sayısı, hata örüntüsü ve teknik borç riskine göre Sokratik Mentor müdahalesi gerekip gerekmediğini tahmin eden göreve özel (dikey) tabular ONNX modeli.",
+  "target": "mudahale_gerekli",
+  "decision_threshold": 0.55,
+  "class_labels": {
+    "0": "Otonom Akış (Müdahale Gerekmez)",
+    "1": "Sokratik Mentor Müdahalesi (Uyarlamalı Destek)"
+  },
+  "classes": [
+    "0",
+    "1"
+  ],
+  "features": [
+    {
+      "name": "deneyim_seviyesi",
+      "label": "Deneyim Seviyesi (1:Çırak, 2:Kalfa, 3:Usta)",
+      "unit": "seviye",
+      "min": 1,
+      "max": 3,
+      "example": 1.0
+    },
+    {
+      "name": "sahne_zorlugu",
+      "label": "Sahne Zorluğu (1-5)",
+      "unit": "katsayı",
+      "min": 1,
+      "max": 5,
+      "example": 4.0
+    },
+    {
+      "name": "karar_suresi_sn",
+      "label": "Karar Süresi (sn)",
+      "unit": "saniye",
+      "min": 1.0,
+      "max": 60.0,
+      "example": 34.5
+    },
+    {
+      "name": "secenek_degistirme_sayisi",
+      "label": "Seçenek Değiştirme / Tereddüt Sayısı",
+      "unit": "adet",
+      "min": 0,
+      "max": 10,
+      "example": 5.0
+    },
+    {
+      "name": "onceki_kritik_hata_sayisi",
+      "label": "Önceki Kritik Hata Sayısı",
+      "unit": "adet",
+      "min": 0,
+      "max": 5,
+      "example": 2.0
+    },
+    {
+      "name": "acilan_ipucu_sayisi",
+      "label": "Açılan İpucu Sayısı",
+      "unit": "adet",
+      "min": 0,
+      "max": 5,
+      "example": 2.0
+    },
+    {
+      "name": "mimari_risk_skoru",
+      "label": "Mimari Risk / Teknik Borç Skoru (0-1)",
+      "unit": "oran",
+      "min": 0.0,
+      "max": 1.0,
+      "example": 0.72
+    }
+  ],
+  "metrics": {
+    "accuracy": 0.88,
+    "auc": 0.9686,
+    "f1": 0.8861,
+    "precision": 0.8974,
+    "recall": 0.875,
+    "real_subset_accuracy": 0.8333,
+    "onnx_max_diff": 1.2e-07
+  },
+  "eval_gate": {
+    "min_auc": 0.8,
+    "min_accuracy": 0.78,
+    "max_onnx_diff": 0.0001,
+    "passed": true
+  },
+  "dataset_summary": {
+    "total_rows": 250,
+    "real_rows": 90,
+    "synthetic_rows": 160,
+    "real_sessions": 18,
+    "synthetic_sessions": 32,
+    "train_rows": 175,
+    "test_rows": 75
+  },
+  "feature_coefficients": {
+    "deneyim_seviyesi": -1.2432,
+    "sahne_zorlugu": 0.7834,
+    "karar_suresi_sn": 2.4668,
+    "secenek_degistirme_sayisi": 1.0147,
+    "onceki_kritik_hata_sayisi": 1.1269,
+    "acilan_ipucu_sayisi": 0.8799,
+    "mimari_risk_skoru": -0.2127
+  },
+  "intercept": 1.3328,
+  "seed": 13,
+  "sklearn_version": "1.9.1",
+  "python_version": "3.12"
+}

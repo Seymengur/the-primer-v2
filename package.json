@@ -1,0 +1,15 @@
+{
+  "name": "the-primer-v2",
+  "version": "2.0.0",
+  "description": "The Primer v2: Uyarlamalı Yazılım Mühendisliği Hikâyesi, ONNX Çıkarımı ve Diferansiyel Parite Testi",
+  "private": true,
+  "scripts": {
+    "serve": "npx http-server web -p 8080 -c-1 --silent",
+    "cy:run": "cypress run",
+    "cy:open": "cypress open"
+  },
+  "devDependencies": {
+    "cypress": "^14.0.0",
+    "http-server": "^14.1.1"
+  }
+}
