@@ -3,104 +3,293 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Primer v2 — Uyarlamalı Yazılım Mühendisliği Hikâyesi & ONNX</title>
+<meta name="color-scheme" content="light dark">
+<script>
+try {
+  document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+} catch (_) {}
+</script>
+<title>The Primer v2 — Siyah-Beyaz Uyarlamalı Yazılım Mühendisliği Hikâyesi & ONNX</title>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
 <style>
   :root {
-    --bg: #0f172a;
-    --bg-card: #1e293b;
-    --bg-elevated: #0b1120;
-    --fg: #f8fafc;
-    --muted: #94a3b8;
-    --line: #334155;
-    --accent: #38bdf8;
-    --accent-hover: #0284c7;
-    --ok: #22c55e;
-    --ok-bg: rgba(34, 197, 94, 0.14);
-    --warn: #f59e0b;
-    --warn-bg: rgba(245, 158, 11, 0.15);
-    --bad: #ef4444;
-    --bad-bg: rgba(239, 68, 68, 0.14);
+    color-scheme: light dark;
+
+    /* Beşiktaş J.K. Siyah-Beyaz & 1903 Kırmızı Tasarım Tokenları */
+    --bjk-black: #09090b;
+    --bjk-carbon: #121215;
+    --bjk-elevated-dark: #18181c;
+    --bjk-white: #ffffff;
+    --bjk-offwhite: #f4f4f5;
+    --bjk-crimson: #e11d48;
+    --bjk-crimson-dark: #be123c;
+
+    --bg: light-dark(#f8f8f9, #09090b);
+    --bg-card: light-dark(#ffffff, #121216);
+    --bg-elevated: light-dark(#f1f1f4, #18181e);
+    --fg: light-dark(#09090b, #fafafa);
+    --muted: light-dark(#52525b, #a1a1aa);
+    --line: light-dark(#d4d4d8, #27272a);
+    --line-strong: light-dark(#09090b, #fafafa);
+
+    --accent: light-dark(#09090b, #ffffff);
+    --accent-fg: light-dark(#ffffff, #09090b);
+    --crimson: light-dark(#be123c, #e11d48);
+    --crimson-soft: light-dark(rgba(190, 18, 60, 0.10), rgba(225, 29, 72, 0.16));
+
+    --ok: light-dark(#15803d, #4ade80);
+    --ok-bg: light-dark(rgba(21, 128, 61, 0.10), rgba(74, 222, 128, 0.14));
+    --warn: light-dark(#b91c1c, #fb7185);
+    --warn-bg: light-dark(rgba(190, 18, 60, 0.10), rgba(225, 29, 72, 0.18));
+    --bad: #dc2626;
+    --bad-bg: rgba(220, 38, 38, 0.14);
+
+    accent-color: var(--crimson);
+    scrollbar-color: var(--muted) var(--bg-elevated);
+
+    &:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+    &:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
   }
+
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: var(--muted); }
+    ::-webkit-scrollbar-track { background: var(--bg-elevated); }
+  }
+
+  @media (forced-colors: active) {
+    :root {
+      --line: CanvasText;
+      --accent: Highlight;
+      --accent-fg: HighlightText;
+    }
+  }
+
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--fg);
-    font: 15px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font: 15px/1.55 "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
-  header {
+
+  /* Üst Siyah-Beyaz Çubuklu Şerit + Kırmızı 1903 Çizgisi */
+  .cubuklu-ribbon {
+    height: 8px;
+    background: repeating-linear-gradient(
+      90deg,
+      #09090b 0px,
+      #09090b 28px,
+      #ffffff 28px,
+      #ffffff 56px
+    );
+    border-bottom: 3px solid var(--crimson);
+  }
+
+  main { max-width: 1020px; margin: 0 auto; padding: 24px 16px 64px; }
+
+  .hero-header {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 16px;
-    margin-bottom: 20px;
+    align-items: center;
+    gap: 16px;
+    background:
+      linear-gradient(135deg, rgba(9,9,11,0.92) 0%, rgba(24,24,27,0.96) 65%, rgba(190,18,60,0.28) 100%),
+      repeating-linear-gradient(-45deg, #111113 0 18px, #18181c 18px 36px);
+    color: #fafafa;
+    border: 1px solid #27272a;
+    border-left: 5px solid #e11d48;
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
   }
-  h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.02em; }
-  h2 { font-size: 18px; margin: 0 0 10px; }
-  h3 { font-size: 15px; margin: 0 0 8px; }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .crest-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #e4e4e7 100%);
+    color: #09090b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    border: 2px solid #e11d48;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .crest-box span {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #be123c;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #ffffff;
+  }
+  h2 { font-size: 18px; margin: 0 0 10px; font-weight: 800; letter-spacing: -0.01em; }
+  h3 { font-size: 15px; margin: 0 0 8px; font-weight: 700; }
   .muted { color: var(--muted); font-size: 13px; }
+  .hero-header .muted { color: #d4d4d8; }
+
   .badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 11px;
+    padding: 5px 12px;
     border-radius: 999px;
-    font-size: 12.5px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     border: 1px solid var(--line);
   }
-  .badge.ok { background: var(--ok-bg); color: #86efac; border-color: rgba(34,197,94,0.4); }
-  .badge.warn { background: var(--warn-bg); color: #fcd34d; border-color: rgba(245,158,11,0.45); }
-  .badge.info { background: rgba(56,189,248,0.14); color: #7dd3fc; border-color: rgba(56,189,248,0.4); }
+  .badge.ok {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-color: currentColor;
+  }
+  .badge.warn {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border-color: currentColor;
+  }
+  .badge.info {
+    background: #ffffff;
+    color: #09090b;
+    border-color: #ffffff;
+  }
+  .badge.crimson {
+    background: #e11d48;
+    color: #ffffff;
+    border-color: #e11d48;
+  }
 
+  /* Forma / Tema Seçici (Progressive Disclosure Settings Surface) */
+  details.theme-Menu {
+    position: relative;
+  }
+  details.theme-Menu summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.25);
+    font-size: 12px;
+    font-weight: 700;
+    user-select: none;
+  }
+  details.theme-Menu summary::-webkit-details-marker { display: none; }
+  .theme-popover {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 50;
+    background: var(--bg-card);
+    color: var(--fg);
+    border: 2px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 8px;
+    min-width: 210px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .theme-opt {
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .theme-opt:hover, .theme-opt.active {
+    background: var(--bg-elevated);
+    border-color: var(--crimson);
+  }
+
+  /* Sekmeler (Siyah-Beyaz Çubuklu Stil) */
   .tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 18px;
   }
   .tab-btn {
-    padding: 9px 16px;
+    padding: 10px 18px;
     border-radius: 8px;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     background: var(--bg-card);
     color: var(--fg);
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 13.5px;
+    transition: all 0.15s ease;
+  }
+  .tab-btn:hover {
+    border-color: var(--line-strong);
   }
   .tab-btn.active {
     background: var(--accent);
-    color: #082f49;
+    color: var(--accent-fg);
     border-color: var(--accent);
+    box-shadow: 0 3px 0 var(--crimson);
   }
+
   .card {
     background: var(--bg-card);
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 12px;
-    padding: 18px;
+    padding: 20px;
     margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   }
   .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
 
   .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-size: 13px; font-weight: 600; color: var(--fg); }
+  .field label { font-size: 13px; font-weight: 700; color: var(--fg); }
   .hint { display: block; color: var(--muted); font-size: 11.5px; margin-bottom: 2px; }
-  .error-msg { display: none; color: #fca5a5; font-size: 12px; margin-top: 3px; }
+  .error-msg { display: none; color: var(--bad); font-size: 12px; font-weight: 600; margin-top: 3px; }
 
   input, select {
     font: inherit;
     color: var(--fg);
     background: var(--bg-elevated);
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    padding: 8px 10px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 11px;
+  }
+  input:focus, select:focus {
+    outline: 2px solid var(--crimson);
+    outline-offset: 1px;
   }
   input:user-invalid,
   input.user-invalid-fallback {
@@ -112,86 +301,124 @@
     display: block;
   }
   input:user-valid {
-    border-color: rgba(34, 197, 94, 0.55);
+    border-color: var(--ok);
   }
 
   button.primary {
     font: inherit;
-    font-weight: 600;
-    padding: 9px 18px;
-    border: 0;
+    font-weight: 800;
+    padding: 10px 20px;
+    border: 2px solid var(--accent);
     border-radius: 8px;
     background: var(--accent);
-    color: #082f49;
+    color: var(--accent-fg);
     cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    box-shadow: 0 3px 0 var(--crimson);
   }
-  button.primary:hover { background: #7dd3fc; }
+  button.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 var(--crimson);
+  }
   button.secondary {
     font: inherit;
     font-size: 13px;
-    padding: 7px 13px;
-    border: 1px solid var(--line);
-    border-radius: 7px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
     background: var(--bg-elevated);
     color: var(--fg);
     cursor: pointer;
+    transition: border-color 0.15s;
   }
-  button.secondary:hover { border-color: var(--accent); }
+  button.secondary:hover { border-color: var(--crimson); }
+
+  /* Stadyum Skorbord Tarzı Telemetri Çubuğu */
+  .telemetry-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    gap: 8px;
+    background: #09090b;
+    color: #fafafa;
+    border: 1.5px solid #27272a;
+    border-top: 3px solid var(--crimson);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .telemetry-bar div {
+    border-right: 1px solid #27272a;
+    padding-right: 8px;
+  }
+  .telemetry-bar div:last-child { border-right: 0; }
+  .telemetry-bar div strong {
+    display: block;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 17px;
+    color: #ffffff;
+    margin-top: 2px;
+  }
 
   .choice-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
   .choice-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: 12px;
+    padding: 13px 16px;
     border-radius: 9px;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     background: var(--bg-elevated);
     color: var(--fg);
     text-align: left;
+    font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
+    transition: all 0.15s ease;
   }
-  .choice-item:hover { border-color: var(--accent); }
+  .choice-item:hover {
+    border-color: var(--line-strong);
+  }
   .choice-item.selected {
-    border-color: var(--accent);
-    background: rgba(56, 189, 248, 0.12);
+    border-color: var(--line-strong);
+    border-left: 5px solid var(--crimson);
+    background: var(--crimson-soft);
+    font-weight: 700;
   }
+
   .mentor-box {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(56, 189, 248, 0.10));
-    border: 1px solid rgba(245, 158, 11, 0.5);
+    background: var(--crimson-soft);
+    border: 1.5px solid var(--crimson);
+    border-left: 6px solid var(--crimson);
     border-radius: 10px;
     padding: 14px 16px;
     margin: 12px 0;
   }
   .scaffolding-box {
-    background: rgba(56, 189, 248, 0.09);
-    border-left: 3px solid var(--accent);
-    padding: 10px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line-strong);
+    padding: 11px 14px;
     border-radius: 6px;
     margin: 10px 0;
     font-size: 13.5px;
   }
-  .telemetry-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 8px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    padding: 10px 12px;
-    margin-bottom: 14px;
-    font-size: 12.5px;
-  }
-  .telemetry-bar div strong { display: block; font-size: 15px; color: var(--accent); }
+
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; }
-  th { color: var(--muted); font-weight: 600; }
+  th, td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; }
+  th { color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 11.5px; letter-spacing: 0.04em; }
   pre {
+    color-scheme: dark;
+    accent-color: var(--crimson);
     margin: 0;
-    background: var(--bg-elevated);
-    padding: 10px;
+    background: #09090b;
+    color: #f4f4f5;
+    border: 1px solid #27272a;
+    padding: 12px;
     border-radius: 8px;
     font-size: 12px;
     white-space: pre-wrap;
@@ -201,55 +428,73 @@
 </style>
 </head>
 <body>
+<div class="cubuklu-ribbon" aria-hidden="true"></div>
 <main>
-  <header>
-    <div>
-      <h1 id="baslik">The Primer v2: Uyarlamalı Yazılım Mühendisliği Hikâyesi</h1>
-      <div class="muted" id="aciklama">ONNX modeli yükleniyor…</div>
+  <header class="hero-header">
+    <div class="brand-row">
+      <div class="crest-box" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L9.5 6.5L4 5L6.5 10.5L2 13L7.5 14.5L6 20L12 17L18 20L16.5 14.5L22 13L17.5 10.5L20 5L14.5 6.5L12 2Z"/>
+        </svg>
+        <span>1903</span>
+      </div>
+      <div>
+        <h1 id="baslik">THE PRIMER v2 · SİYAH-BEYAZ MÜHENDİSLİK MENTORU</h1>
+        <div class="muted" id="aciklama">ONNX modeli yükleniyor…</div>
+      </div>
     </div>
+
     <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
       <span id="engine-status" class="badge info" data-cy="engine-status">ONNX Hazırlanıyor</span>
-      <span class="badge ok">Seed: 13 · Eşik: 0.55</span>
+      <span class="badge crimson">BJK 1903 · Seed: 13</span>
+      <details class="theme-Menu" id="theme-menu">
+        <summary>🏁 Forma Teması</summary>
+        <div class="theme-popover" role="group" aria-label="Forma Renk Şeması Seçimi">
+          <button type="button" class="theme-opt" data-scheme="light dark">⚙️ Sistem (Şu an: Otomatik)</button>
+          <button type="button" class="theme-opt" data-scheme="dark">🦅 Siyah Forma (Deplasman / Gece)</button>
+          <button type="button" class="theme-opt" data-scheme="light">🏳️ Beyaz Forma (İç Saha / Gündüz)</button>
+        </div>
+      </details>
     </div>
   </header>
 
   <nav class="tabs" aria-label="Uygulama modları">
-    <button type="button" class="tab-btn active" data-tab="story" data-cy="tab-story">1. Etkileşimli Hikâye (Primer v2)</button>
-    <button type="button" class="tab-btn" data-tab="parity" data-cy="tab-parity">2. Diferansiyel Test & Parite Lab</button>
-    <button type="button" class="tab-btn" data-tab="data" data-cy="tab-data">3. Veri Toplama Modu (KVKK / CSV)</button>
+    <button type="button" class="tab-btn active" data-tab="story" data-cy="tab-story">🦅 1. Etkileşimli Hikâye (Primer v2)</button>
+    <button type="button" class="tab-btn" data-tab="parity" data-cy="tab-parity">⚖️ 2. Diferansiyel Test & Parite Lab</button>
+    <button type="button" class="tab-btn" data-tab="data" data-cy="tab-data">📊 3. Veri Toplama Modu (KVKK / CSV)</button>
   </nav>
 
   <!-- ==================== SEKME 1: ETKİLEŞİMLİ HİKÂYE ==================== -->
   <section id="panel-story">
     <!-- Aşama 1: 3 Soruluk Başlangıç Profili (v1 mirası) -->
     <div id="onboarding-card" class="card" data-cy="onboarding-card">
-      <h2>Başlangıç Profili: Seni Tanıyalım (3 Soru)</h2>
+      <h2>🏁 Başlangıç Kadrosu: Seni Tanıyalım (3 Soru)</h2>
       <p class="muted">
         Geçen haftaki <strong>The Primer v1</strong> girişindeki 3 soruya verdiğin yanıtlar başlangıç profilini belirler.
         <strong>v2</strong>'de ise her sahnedeki gerçek zamanlı karar süren, seçenek değiştirme (tereddüt) sayın ve
-        teknik borç riskin <code>model.onnx</code> tarafından değerlendirilerek hikâye canlı uyarlanır.
+        teknik borç riskin <code>model.onnx</code> tarafından değerlendirilerek oyun içi taktik canlı uyarlanır.
       </p>
       <div class="grid-3" style="margin-top:14px;">
         <div class="field">
           <label for="q1-seviye">1. Yazılım Mühendisliği Deneyimin</label>
           <span class="hint">Modelin <code>deneyim_seviyesi</code> girdisini belirler</span>
           <select id="q1-seviye" data-cy="q1-select">
-            <option value="1">1 — Çırak (Junior / Öğrenci)</option>
-            <option value="2" selected>2 — Kalfa (Mid-Level Adayı)</option>
-            <option value="3">3 — Usta (Senior / Sistem Mimarı Adayı)</option>
+            <option value="1">1 — Çırak (Altyapı / Junior)</option>
+            <option value="2" selected>2 — Kalfa (As Kadro / Mid-Level)</option>
+            <option value="3">3 — Usta (Kaptan / Senior Adayı)</option>
           </select>
         </div>
         <div class="field">
           <label for="q2-yaklasim">2. Üretimde Öncelikli Yaklaşımın</label>
           <span class="hint">3V: Velocity mi Validation mı?</span>
           <select id="q2-yaklasim" data-cy="q2-select">
-            <option value="0">Hızlı Prototipçi (Velocity Odaklı)</option>
-            <option value="1" selected>Doğrulamacı (Validation & Test Odaklı)</option>
+            <option value="0">Hücumcu Prototipçi (Velocity Odaklı)</option>
+            <option value="1" selected>Sağlam Savunmacı (Validation & Test Odaklı)</option>
           </select>
         </div>
         <div class="field">
           <label for="q3-refleks">3. Canlı Sistem Kriz Refleksin</label>
-          <span class="hint">Prod çöktüğünde ilk adımın</span>
+          <span class="hint">Prod çöktüğünde ilk hamlen</span>
           <select id="q3-refleks" data-cy="q3-select">
             <option value="1">Log ve Telemetri Analizi</option>
             <option value="2" selected>Commit'e Sabitli Rollback / Canary</option>
@@ -257,17 +502,17 @@
           </select>
         </div>
       </div>
-      <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <button type="button" id="start-story-btn" class="primary" data-cy="start-story-btn">Hikâyeyi Başlat</button>
+      <div style="margin-top:18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button type="button" id="start-story-btn" class="primary" data-cy="start-story-btn">🦅 Hikâyeyi Başlat</button>
         <span class="muted">Anonim Oturum Kimliği: <code id="session-id-label" data-cy="session-id">ses_...</code></span>
       </div>
     </div>
 
     <!-- Aşama 2: Aktif Sahne ve Model Uyarlama Paneli -->
     <div id="scene-card" class="card hidden" data-cy="scene-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-        <div>
-          <span class="badge info" id="scene-step-badge" data-cy="scene-number">Sahne 1 / 5</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="badge crimson" id="scene-step-badge" data-cy="scene-number">Sahne 1 / 5</span>
           <span class="badge" id="scene-difficulty-badge">Zorluk: 2/5</span>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -280,7 +525,7 @@
         </div>
       </div>
 
-      <!-- Canlı Davranışsal Telemetri Çubuğu (7 Özellik) -->
+      <!-- Stadyum Skorbord Tarzı Canlı Davranışsal Telemetri Çubuğu (7 Özellik) -->
       <div class="telemetry-bar" aria-label="Canlı oyuncu telemetrisi">
         <div>Seviye<strong id="tel-seviye">2</strong></div>
         <div>Sahne Zorluğu<strong id="tel-zorluk">2</strong></div>
@@ -295,7 +540,7 @@
       <div class="card" style="background:var(--bg-elevated); margin-bottom:14px; padding:12px 14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div>
-            <strong>ONNX Model Çıkarımı:</strong>
+            <strong>ONNX Taktik Motoru:</strong>
             <code>P(mudahale_gerekli=1) = <span id="story-p" data-cy="story-p">0.0000</span></code>
           </div>
           <span id="adaptation-badge" class="badge ok" data-cy="adaptation-badge">Otonom Mühendis Modu (Akış)</span>
@@ -316,18 +561,18 @@
 
       <!-- Sokratik Mentor Müdahale Kartı (p >= 0.55 olduğunda otomatik açılır) -->
       <div id="mentor-hint-card" class="mentor-box hidden" data-cy="mentor-hint-card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong>🧭 Sokratik Mentor Müdahalesi (Model Olasılığı &ge; 0.55)</strong>
-          <span class="badge warn">Tutor Koruması: Risk Cezası -%40</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <strong>🦅 Sokratik Mentor Müdahalesi (Model Olasılığı &ge; 0.55)</strong>
+          <span class="badge crimson">Tutor Koruması: Risk Cezası -%40</span>
         </div>
-        <p id="mentor-hint-text" style="margin:6px 0 4px;"></p>
+        <p id="mentor-hint-text" style="margin:8px 0 4px;"></p>
         <div class="muted" id="mentor-ref-text"></div>
       </div>
 
       <!-- Karar Seçenekleri -->
       <div class="choice-list" id="choice-list" data-cy="choice-list"></div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px;">
         <button type="button" id="request-hint-btn" class="secondary" data-cy="request-hint-btn">
           💡 Sokratik İpucu İste (+1 İpucu Sayacı)
         </button>
@@ -339,20 +584,20 @@
 
     <!-- Aşama 3: Hikâye Sonu Mühendislik Karnesi (Regresyon E2E Bitiş Ekranı) -->
     <div id="summary-card" class="card hidden" data-cy="summary-card">
-      <h2>🎓 The Primer v2 — Mühendislik Karnesi & Oturum Özeti</h2>
+      <h2>🏆 The Primer v2 — Mühendislik Karnesi & Maç Sonu Özeti</h2>
       <p id="summary-outcome" data-cy="summary-outcome"></p>
       <div class="grid-3" style="margin:14px 0;">
         <div class="card" style="margin:0; background:var(--bg-elevated);">
           <div class="muted">Son Mimari Risk Skoru</div>
-          <strong id="sum-risk" style="font-size:20px;">0.00</strong>
+          <strong id="sum-risk" style="font-size:22px;">0.00</strong>
         </div>
         <div class="card" style="margin:0; background:var(--bg-elevated);">
           <div class="muted">Toplam Kritik Hata</div>
-          <strong id="sum-errors" style="font-size:20px;">0</strong>
+          <strong id="sum-errors" style="font-size:22px;">0</strong>
         </div>
         <div class="card" style="margin:0; background:var(--bg-elevated);">
           <div class="muted">Sokratik Mentor Müdahalesi</div>
-          <strong id="sum-interventions" style="font-size:20px;">0 / 5 Sahne</strong>
+          <strong id="sum-interventions" style="font-size:22px;">0 / 5 Sahne</strong>
         </div>
       </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -365,7 +610,7 @@
   <!-- ==================== SEKME 2: DİFERANSİYEL TEST & PARİTE LAB ==================== -->
   <section id="panel-parity" class="hidden">
     <div class="card">
-      <h2>Diferansiyel Test (Parite Testi) ve Test Kahini (Oracle) Doğrulaması</h2>
+      <h2>⚖️ Diferansiyel Test (Parite Testi) ve Test Kahini (Oracle) Doğrulaması</h2>
       <p class="muted">
         Bu laboratuvar, tarayıcıdaki <code>onnxruntime-web</code> çıkarımı ile Python Test Kahini
         (<code>tests/parite.py</code> → <code>tests/parite.json</code>) arasındaki farkın
@@ -385,12 +630,12 @@
       </div>
 
       <form id="form" class="grid-3" novalidate></form>
-      <div style="margin-top:14px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <div style="margin-top:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
         <button type="submit" form="form" id="tahmin" class="primary" data-cy="predict-btn">Tahmin et</button>
         <div>
           Olasılık <code>P(mudahale_gerekli=1)</code>:
-          <strong id="p-deger" data-cy="p" style="font-size:18px; color:var(--accent);">0.000000</strong>
-          <span id="p-karar-rozet" class="badge info" style="margin-left:8px;">—</span>
+          <strong id="p-deger" data-cy="p" style="font-size:19px;">0.000000</strong>
+          <span id="p-karar-rozet" class="badge crimson" style="margin-left:8px;">—</span>
         </div>
       </div>
     </div>
@@ -423,7 +668,7 @@
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
-          <h2>Veri Toplama Modu (`kaynak = gercek`) & KVKK Uyumlu Oturum Kaydı</h2>
+          <h2>📊 Veri Toplama Modu (`kaynak = gercek`) & KVKK Uyumlu Oturum Kaydı</h2>
           <p class="muted" style="margin:0;">
             Kişisel veri (ad, e-posta, IP, cihaz kimliği) toplanmaz. Her sahne kararı anonim <code>oturum_id</code> ile kaydedilir.
           </p>
@@ -457,6 +702,34 @@
 <script>
 ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
 
+// Modern Web Guidance: dark-mode-toggle (meta[name="color-scheme"] + localStorage sync)
+(() => {
+  const meta = document.querySelector('meta[name="color-scheme"]');
+  const menu = document.getElementById("theme-menu");
+  const sistemEtiketGuncelle = () => {
+    const sistemKoyu = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const sysBtn = document.querySelector('[data-scheme="light dark"]');
+    if (sysBtn) {
+      sysBtn.textContent = `⚙️ Sistem (Şu an: ${sistemKoyu ? "Siyah" : "Beyaz"})`;
+    }
+  };
+  sistemEtiketGuncelle();
+  document.querySelectorAll(".theme-opt").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const hedef = btn.getAttribute("data-scheme");
+      meta.content = hedef;
+      try {
+        if (hedef === "light dark") localStorage.removeItem("color-scheme");
+        else localStorage.setItem("color-scheme", hedef);
+      } catch (_) {}
+      if (menu) menu.open = false;
+    });
+  });
+  window.addEventListener("storage", (e) => {
+    if (e.key === "color-scheme") meta.content = e.newValue ?? "light dark";
+  });
+})();
+
 // 5 Sahnelik Yazılım Mühendisliği Hikâyesi (The Primer v1 + v2)
 const SAHNELER = [
   {
@@ -477,7 +750,7 @@ const SAHNELER = [
     no: 2,
     zorluk: 3,
     baslik: "Sahne 2: Gölgede Kalan Model (Shadow vs. Canary Dağıtım)",
-    anlatim: "Yeni eğittiğin ONNX modelinin test AUC skoru 0.94 çıktı. Ancak gerçek oyuncu trafiğinde nasıl davranacağını henüz görmedin. Modeli tüm kullanıcılara nasıl devreye alırsın?",
+    anlatim: "Yeni eğittiğin ONNX modelinin test AUC skoru 0.96 çıktı. Ancak gerçek oyuncu trafiğinde nasıl davranacağını henüz görmedin. Modeli tüm kullanıcılara nasıl devreye alırsın?",
     scaffolding: "Eğitim kümesindeki yüksek doğruluk üretimde tek başına yeterli değildir (Shankar vd., 2022 - 3V). Önce Gölge Dağıtım (Shadow Mode) ile gerçek veride sessizce çalıştırıp ardından %5 Canary ile kademeli açmak güvenli geri dönüş sağlar.",
     ipucu: "Sokratik Soru: Modeli bir anda %100 trafiğe açarsan ve beklenmedik bir dağılım kayması (data drift) yaşanırsa oyuncuları nasıl korursun? Shadow → %5 Canary → Progressive Rollout zincirini hatırla.",
     referans: "Kaynak: Amershi vd. (2019) & Shankar vd. (2022) — Operationalizing ML (Velocity, Validation, Versioning).",
@@ -665,7 +938,7 @@ function pariteFormunuKur() {
         aria-describedby="hint-${o.name}"
         aria-errormessage="err-${o.name}"
       >
-      <div id="err-${o.name}" class="error-msg">Lütfen ${o.min ?? 0} ile ${o.max ?? 100} arasında geçerli bir değer girin.</div>
+      <div id="err-${o.name}" class="error-msg"><span aria-hidden="true">❌</span> Lütfen ${o.min ?? 0} ile ${o.max ?? 100} arasında geçerli bir değer girin.</div>
     </div>
   `).join("");
 }
@@ -772,7 +1045,6 @@ async function sahneModeliDegerlendir() {
   const mentorKart = document.getElementById("mentor-hint-card");
   const scaffoldingKart = document.getElementById("adaptive-scaffolding");
 
-  // v1 Sabit Kuralı (Shadow Mode karşılaştırması için: yalnızca seviye==1 ise ipucu veriyordu)
   const v1Karar = oyun.seviye === 1 ? "Müdahale (Sabit Seviye=1 Kuralı)" : "Otonom (Sabit Kural)";
   const v2Karar = mudahaleAktif ? "Sokratik Müdahale (ONNX Davranışsal)" : "Otonom Akış (ONNX Davranışsal)";
   document.getElementById("shadow-log").textContent =
@@ -790,7 +1062,6 @@ async function sahneModeliDegerlendir() {
     scaffoldingKart.classList.add("hidden");
   }
 
-  // Riskli seçeneklerdeki görsel uyarı rozetlerini güncelle
   document.querySelectorAll(".risk-warning-pill").forEach(el => {
     el.classList.toggle("hidden", !mudahaleAktif);
   });
@@ -798,7 +1069,7 @@ async function sahneModeliDegerlendir() {
 
 async function sahneyiCiz() {
   const sahne = SAHNELER[oyun.sahneIdx];
-  oyun.sahneBaslangicMs = performance.now() - 4000; // Başlangıç okuma süresi 4.0 sn
+  oyun.sahneBaslangicMs = performance.now() - 4000;
   oyun.manuelSureSn = null;
   oyun.seciliSecenekIdx = 0;
   oyun.secenekDegistirme = 0;
@@ -875,7 +1146,6 @@ async function karariOnayla() {
 
   if (mudahaleOldu) oyun.mudahaleSayisi += 1;
 
-  // Telemetri satırını kaydet (data/oturumlar.csv sözleşmesiyle birebir aynı)
   const satir = {
     oturum_id: oyun.oturumId,
     sahne_no: sahne.no,
@@ -892,7 +1162,6 @@ async function karariOnayla() {
   toplananSatirlar.push(satir);
   telemetriTablosunuGuncelle();
 
-  // Durumu sonraki sahne için güncelle (Sokratik müdahale aktifse hata cezası %40 yumuşatılır)
   if (secim.hataMi) {
     oyun.kritikHataSayisi = Math.min(5, oyun.kritikHataSayisi + 1);
     const ceza = mudahaleOldu ? secim.riskDelta * 0.6 : secim.riskDelta;
@@ -920,7 +1189,7 @@ function hikayeyiBitir() {
 
   const basarili = oyun.mimariRiskSkoru < 0.45 && oyun.kritikHataSayisi <= 1;
   document.getElementById("summary-outcome").textContent = basarili
-    ? "Tebrikler! Üretim hattını düşük teknik borç, tam diferansiyel parite (< 1e-4) ve güvenli sürümleme ile canlıya aldın."
+    ? "Tebrikler! Siyah-Beyaz disiplinle üretim hattını düşük teknik borç, tam diferansiyel parite (< 1e-4) ve güvenli sürümleme ile şampiyonluğa taşıdın!"
     : "Oturum tamamlandı! Sokratik Mentor müdahaleleriyle kritik virajları gördün; teknik borcu düşürmek için yeni bir oturum deneyebilirsin.";
 }
 
@@ -989,7 +1258,6 @@ document.getElementById("request-hint-btn").addEventListener("click", async () =
   await sahneModeliDegerlendir();
 });
 
-// Demo & Test Hızlı Simülasyon Butonları (Aynı sahnede iki farklı oyuncu davranışını anında gösterir)
 document.getElementById("sim-hesitant-btn").addEventListener("click", async () => {
   oyun.seviye = 1;
   oyun.manuelSureSn = 36.5;
