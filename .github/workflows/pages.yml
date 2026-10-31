@@ -1,4 +1,4 @@
-name: GitHub Pages — Web Uygulaması Dağıtımı
+name: GitHub Pages — Web Uygulaması ve Cypress Demo Video Dağıtımı
 
 on:
   push:
@@ -22,6 +22,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Cypress kurulumu
+        run: npm install
+      - name: Cypress ile 65 saniyelik resmi demo videoyu kaydet (web/demo.mp4)
+        run: |
+          python3 -m http.server 8080 --directory web &
+          sleep 2
+          npx cypress run --spec "cypress/e2e/demo_video.cy.js"
+          cp cypress/videos/demo_video.cy.js.mp4 web/demo.mp4
+          ls -lh web/demo.mp4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
