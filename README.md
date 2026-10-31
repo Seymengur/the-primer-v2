@@ -1,6 +1,8 @@
 # The Primer v2: Hikâyene Küçük Bir Model Ekle
 
 > **Ders:** YZM301 Yazılım Testi — Ödev 7 · **Tohum (Seed):** `13` · **Hata Toleransı:** `< 1e-4` ($10^{-4}$)
+> - **Canlı Uygulama (GitHub Pages):** <https://seymengur.github.io/the-primer-v2/>
+> - **GitHub Reposu:** <https://github.com/Seymengur/the-primer-v2>
 > - **Hugging Face Model Reposu:** <https://huggingface.co/Seymen55/the-primer-v2-onnx>
 > - **Commit-Sabitli ONNX Model URL'si:** `https://huggingface.co/Seymen55/the-primer-v2-onnx/resolve/846390dc7ad50af1e942307346bfd0e8e93824a2/model.onnx`
 
