@@ -3,437 +3,780 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <script>
 try {
-  document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+  document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "dark light";
 } catch (_) {}
 </script>
 <title>The Primer v2 — Uyarlamalı Yazılım Mühendisliği Hikâyesi & ONNX</title>
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
 <style>
-  :root {
-    color-scheme: light dark;
+  @layer base, theme, layout, components, utilities;
 
-    /* Siyah-Beyaz & Kırmızı Kontrast Tasarım Tokenları */
-    --mono-black: #09090b;
-    --mono-carbon: #121215;
-    --mono-elevated-dark: #18181c;
-    --mono-white: #ffffff;
-    --mono-offwhite: #f4f4f5;
-    --accent-crimson: #e11d48;
-    --accent-crimson-dark: #be123c;
-
-    --bg: light-dark(#f8f8f9, #09090b);
-    --bg-card: light-dark(#ffffff, #121216);
-    --bg-elevated: light-dark(#f1f1f4, #18181e);
-    --fg: light-dark(#09090b, #fafafa);
-    --muted: light-dark(#52525b, #a1a1aa);
-    --line: light-dark(#d4d4d8, #27272a);
-    --line-strong: light-dark(#09090b, #fafafa);
-
-    --accent: light-dark(#09090b, #ffffff);
-    --accent-fg: light-dark(#ffffff, #09090b);
-    --crimson: light-dark(#be123c, #e11d48);
-    --crimson-soft: light-dark(rgba(190, 18, 60, 0.10), rgba(225, 29, 72, 0.16));
-
-    --ok: light-dark(#15803d, #4ade80);
-    --ok-bg: light-dark(rgba(21, 128, 61, 0.10), rgba(74, 222, 128, 0.14));
-    --warn: light-dark(#b91c1c, #fb7185);
-    --warn-bg: light-dark(rgba(190, 18, 60, 0.10), rgba(225, 29, 72, 0.18));
-    --bad: #dc2626;
-    --bad-bg: rgba(220, 38, 38, 0.14);
-
-    accent-color: var(--crimson);
-    scrollbar-color: var(--muted) var(--bg-elevated);
-
-    &:has(> head > meta[name="color-scheme"][content="dark"]) {
-      color-scheme: dark;
-    }
-    &:has(> head > meta[name="color-scheme"][content="light"]) {
-      color-scheme: light;
-    }
-  }
-
-  @supports not (scrollbar-color: auto) {
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-thumb { background: var(--muted); }
-    ::-webkit-scrollbar-track { background: var(--bg-elevated); }
-  }
-
-  @media (forced-colors: active) {
+  @layer theme {
     :root {
-      --line: CanvasText;
-      --accent: Highlight;
-      --accent-fg: HighlightText;
+      color-scheme: dark light;
+
+      /* Siyah - Beyaz - Kırmızı Mimari Stüdyo Tasarım Tokenları */
+      --bg-canvas: light-dark(#f4f4f6, #070709);
+      --bg-surface: light-dark(#ffffff, #101014);
+      --bg-elevated: light-dark(#f8f8fa, #17171d);
+      --bg-glass: light-dark(rgba(255, 255, 255, 0.86), rgba(16, 16, 20, 0.86));
+
+      --fg-primary: light-dark(#09090b, #fafafa);
+      --fg-secondary: light-dark(#27272a, #d4d4d8);
+      --fg-muted: light-dark(#52525b, #9ca3af);
+
+      --border-subtle: light-dark(#e4e4e7, #22222a);
+      --border-strong: light-dark(#09090b, #f4f4f5);
+
+      --accent-mono: light-dark(#09090b, #ffffff);
+      --accent-mono-fg: light-dark(#ffffff, #09090b);
+
+      --crimson: light-dark(#be123c, #e11d48);
+      --crimson-bright: #f43f5e;
+      --crimson-soft: light-dark(rgba(190, 18, 60, 0.08), rgba(225, 29, 72, 0.15));
+      --crimson-glow: light-dark(rgba(190, 18, 60, 0.22), rgba(225, 29, 72, 0.35));
+
+      --ok: light-dark(#15803d, #34d399);
+      --ok-bg: light-dark(rgba(21, 128, 61, 0.10), rgba(52, 211, 153, 0.14));
+      --warn: light-dark(#be123c, #fb7185);
+      --warn-bg: light-dark(rgba(190, 18, 60, 0.10), rgba(225, 29, 72, 0.18));
+      --bad: #dc2626;
+      --bad-bg: rgba(220, 38, 38, 0.14);
+
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+
+      accent-color: var(--crimson);
+      scrollbar-color: var(--fg-muted) var(--bg-elevated);
+
+      &:has(> head > meta[name="color-scheme"][content="dark"]) {
+        color-scheme: dark;
+      }
+      &:has(> head > meta[name="color-scheme"][content="light"]) {
+        color-scheme: light;
+      }
+    }
+
+    @media (forced-colors: active) {
+      :root {
+        --border-subtle: CanvasText;
+        --accent-mono: Highlight;
+        --accent-mono-fg: HighlightText;
+      }
     }
   }
 
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--fg);
-    font: 15px/1.55 "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  @layer base {
+    html, body, main, section, header, nav, div, form, table, th, td, button, input, select, pre, details, summary {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-canvas);
+      background-image:
+        radial-gradient(circle at 12% 0%, var(--crimson-soft), transparent 38%),
+        radial-gradient(circle at 88% 100%, var(--crimson-soft), transparent 36%),
+        radial-gradient(var(--border-subtle) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 24px 24px;
+      color: var(--fg-primary);
+      font: 15px/1.6 "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100dvh;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+    }
+
+    code, pre, .mono {
+      font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      ::view-transition-group(*),
+      ::view-transition-old(*),
+      ::view-transition-new(*) {
+        animation: none !important;
+      }
+    }
   }
 
-  /* Üst Siyah-Beyaz Şerit + Kırmızı Vurgu Çizgisi */
-  .cubuklu-ribbon {
-    height: 8px;
-    background: repeating-linear-gradient(
-      90deg,
-      #09090b 0px,
-      #09090b 28px,
-      #ffffff 28px,
-      #ffffff 56px
-    );
-    border-bottom: 3px solid var(--crimson);
+  @layer layout {
+    .top-accent-stripe {
+      height: 5px;
+      background: linear-gradient(
+        90deg,
+        #09090b 0%,
+        #09090b 30%,
+        #ffffff 30%,
+        #ffffff 60%,
+        #e11d48 60%,
+        #e11d48 100%
+      );
+      box-shadow: 0 2px 14px var(--crimson-glow);
+    }
+
+    .app-shell {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding: 24px 20px 72px;
+    }
+
+    /* Komut Stüdyosu Üst Barı */
+    .studio-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      background:
+        linear-gradient(125deg, rgba(10, 10, 14, 0.96) 0%, rgba(22, 22, 29, 0.94) 68%, rgba(190, 18, 60, 0.25) 100%);
+      color: #fafafa;
+      border: 1px solid #272730;
+      border-radius: var(--radius-lg);
+      corner-shape: squircle;
+      padding: 20px 24px;
+      margin-block-end: 20px;
+      box-shadow: 0 20px 45px -18px rgba(0, 0, 0, 0.55);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .studio-topbar::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block: 0;
+      width: 5px;
+      background: linear-gradient(180deg, #ffffff 0%, #e11d48 55%, #09090b 100%);
+    }
+
+    /* İki Sütunlu Bento Sahne Düzeni */
+    .scene-bento {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* Parite Laboratuvarı İki Sütunlu Düzen */
+    .parity-bento {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(0, 1.35fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .scene-bento,
+      .parity-bento {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
   }
 
-  main { max-width: 1020px; margin: 0 auto; padding: 24px 16px 64px; }
+  @layer components {
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-  .hero-header {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    background:
-      linear-gradient(135deg, rgba(9,9,11,0.92) 0%, rgba(24,24,27,0.96) 65%, rgba(190,18,60,0.28) 100%),
-      repeating-linear-gradient(-45deg, #111113 0 18px, #18181c 18px 36px);
-    color: #fafafa;
-    border: 1px solid #27272a;
-    border-left: 5px solid #e11d48;
-    border-radius: 14px;
-    padding: 20px 22px;
-    margin-bottom: 22px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    .brand-emblem {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      corner-shape: squircle;
+      background: linear-gradient(145deg, #ffffff 0%, #e4e4e7 100%);
+      color: #09090b;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      border: 2px solid #e11d48;
+      box-shadow: 0 8px 20px rgba(225, 29, 72, 0.28);
+      flex-shrink: 0;
+    }
+    .brand-emblem span {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: #be123c;
+      margin-block-start: 2px;
+      line-height: 1;
+    }
+
+    .eyebrow-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fb7185;
+      margin-block-end: 4px;
+    }
+
+    .studio-topbar h1 {
+      font-size: clamp(18px, 2.2vw, 23px);
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .studio-topbar .muted {
+      color: #cbd5e1;
+      font-size: 12.5px;
+      margin-block-start: 3px;
+    }
+
+    .muted {
+      color: var(--fg-muted);
+      font-size: 13px;
+    }
+
+    /* Rozetler */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+    .badge.ok {
+      background: var(--ok-bg);
+      color: var(--ok);
+      border-color: currentColor;
+    }
+    .badge.warn {
+      background: var(--warn-bg);
+      color: var(--warn);
+      border-color: currentColor;
+    }
+    .badge.info {
+      background: #ffffff;
+      color: #09090b;
+      border-color: #ffffff;
+    }
+    .badge.crimson {
+      background: var(--crimson);
+      color: #ffffff;
+      border-color: var(--crimson);
+      box-shadow: 0 4px 12px var(--crimson-glow);
+    }
+
+    /* Görünüm Teması Menüsü */
+    details.theme-Menu {
+      position: relative;
+    }
+    details.theme-Menu summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 12px;
+      font-weight: 700;
+      user-select: none;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    details.theme-Menu summary:hover {
+      border-color: #e11d48;
+      background: rgba(225, 29, 72, 0.18);
+    }
+    details.theme-Menu summary::-webkit-details-marker { display: none; }
+    .theme-popover {
+      position: absolute;
+      inset-inline-end: 0;
+      inset-block-start: calc(100% + 8px);
+      z-index: 60;
+      background: var(--bg-surface);
+      color: var(--fg-primary);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      min-width: 220px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .theme-opt {
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-align: start;
+      padding: 8px 11px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--fg-primary);
+      cursor: pointer;
+    }
+    .theme-opt:hover:not(:disabled) {
+      background: var(--bg-elevated);
+      border-color: var(--crimson);
+    }
+
+    /* Modern Segmented Pill Navigation */
+    .mode-switcher {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 6px;
+      border-radius: 14px;
+      corner-shape: squircle;
+      margin-block-end: 22px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--fg-muted);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13.5px;
+      transition: all 0.18s ease;
+    }
+    .tab-btn:hover:not(:disabled):not(.active) {
+      color: var(--fg-primary);
+      background: var(--bg-elevated);
+    }
+    .tab-btn.active {
+      background: var(--accent-mono);
+      color: var(--accent-mono-fg);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2), inset 0 -2px 0 var(--crimson);
+    }
+
+    /* Yüzey Kartları */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      corner-shape: squircle;
+      padding: 24px;
+      margin-block-end: 18px;
+      box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.18);
+      position: relative;
+    }
+
+    .card-accent-top {
+      border-block-start: 3px solid var(--crimson);
+    }
+
+    /* Başlangıç 3 Adımlı Bento Kartları */
+    .onboarding-step-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      transition: border-color 0.18s ease, transform 0.18s ease;
+    }
+    .onboarding-step-card:hover {
+      border-color: var(--crimson);
+      transform: translateY(-2px);
+    }
+    .step-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--accent-mono);
+      color: var(--accent-mono-fg);
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 2px 2px 0 var(--crimson);
+    }
+
+    /* 5 Sahnelik İlerleme Çubuğu (Story Stepper) */
+    .story-stepper {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-block-end: 18px;
+    }
+    .step-node {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--fg-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .step-node .dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .step-node.active {
+      border-color: var(--crimson);
+      background: var(--crimson-soft);
+      color: var(--fg-primary);
+    }
+    .step-node.active .dot {
+      background: var(--crimson);
+      color: #ffffff;
+      border-color: var(--crimson);
+    }
+    .step-node.done {
+      border-color: var(--border-strong);
+      color: var(--fg-primary);
+    }
+    .step-node.done .dot {
+      background: var(--accent-mono);
+      color: var(--accent-mono-fg);
+    }
+    @media (max-width: 720px) {
+      .step-node span.step-label { display: none; }
+      .step-node { justify-content: center; }
+    }
+
+    /* Form Elemanları */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 13.5px; font-weight: 800; color: var(--fg-primary); }
+    .hint { display: block; color: var(--fg-muted); font-size: 11.5px; }
+    .error-msg { display: none; color: var(--bad); font-size: 12px; font-weight: 600; margin-block-start: 3px; }
+
+    input, select {
+      font: inherit;
+      color: var(--fg-primary);
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--crimson);
+      box-shadow: 0 0 0 3px var(--crimson-soft);
+    }
+    input:user-invalid,
+    input.user-invalid-fallback {
+      border-color: var(--bad);
+      background-color: var(--bad-bg);
+    }
+    input:user-invalid + .error-msg,
+    input.user-invalid-fallback + .error-msg {
+      display: block;
+    }
+    input:user-valid {
+      border-color: var(--ok);
+    }
+
+    /* Butonlar */
+    button.primary {
+      font: inherit;
+      font-weight: 800;
+      padding: 11px 22px;
+      border: 2px solid var(--accent-mono);
+      border-radius: 10px;
+      background: var(--accent-mono);
+      color: var(--accent-mono-fg);
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: transform 0.12s ease, box-shadow 0.15s ease;
+      box-shadow: 0 4px 0 var(--crimson);
+    }
+    button.primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 var(--crimson);
+    }
+    button.primary:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 2px 0 var(--crimson);
+    }
+
+    button.secondary {
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 9px;
+      background: var(--bg-elevated);
+      color: var(--fg-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button.secondary:hover:not(:disabled) {
+      border-color: var(--crimson);
+      background: var(--crimson-soft);
+    }
+
+    /* Senaryo Anlatım Kutusu */
+    .narrative-stage {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-inline-start: 4px solid var(--accent-mono);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-block: 14px 18px;
+      font-size: 15.5px;
+      line-height: 1.65;
+    }
+
+    /* Etkileşimli Karar Kartları */
+    .choice-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-block: 16px;
+    }
+    .choice-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 18px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--fg-primary);
+      text-align: start;
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      position: relative;
+    }
+    .choice-item:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      transform: translateX(3px);
+    }
+    .choice-item.selected {
+      border-color: var(--crimson);
+      border-inline-start: 6px solid var(--crimson);
+      background: var(--crimson-soft);
+      font-weight: 700;
+      box-shadow: 0 8px 24px -10px var(--crimson-glow);
+    }
+    .choice-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .choice-item.selected .choice-key {
+      background: var(--crimson);
+      color: #ffffff;
+      border-color: var(--crimson);
+    }
+
+    /* Sokratik Mentor & Uyarlamalı Derinlik Kartları */
+    .mentor-box {
+      background: var(--crimson-soft);
+      border: 1.5px solid var(--crimson);
+      border-inline-start: 6px solid var(--crimson);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      margin-block: 14px;
+      box-shadow: 0 10px 28px -12px var(--crimson-glow);
+    }
+    .scaffolding-box {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-inline-start: 4px solid var(--border-strong);
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      margin-block: 12px;
+      font-size: 13.5px;
+    }
+
+    /* Sağ Sütun: Canlı ONNX Kokpit & Telemetri Bento */
+    .onnx-cockpit {
+      background: #0a0a0e;
+      color: #fafafa;
+      border: 1.5px solid #252530;
+      border-block-start: 4px solid #e11d48;
+      border-radius: var(--radius-lg);
+      corner-shape: squircle;
+      padding: 20px;
+      box-shadow: 0 20px 42px -16px rgba(0, 0, 0, 0.5);
+    }
+
+    .prob-readout {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-block: 10px 8px;
+    }
+    .prob-number {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .prob-meter-track {
+      height: 10px;
+      background: #1c1c24;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #2d2d3a;
+      margin-block-end: 12px;
+    }
+    .prob-meter-fill {
+      height: 100%;
+      width: 8%;
+      background: linear-gradient(90deg, #34d399 0%, #e11d48 75%);
+      border-radius: 999px;
+      transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .prob-threshold-mark {
+      position: absolute;
+      inset-inline-start: 55%;
+      inset-block: 0;
+      width: 2px;
+      background: #ffffff;
+      opacity: 0.85;
+    }
+
+    .telemetry-bar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-block-start: 14px;
+    }
+    .telemetry-tile {
+      background: #13131a;
+      border: 1px solid #252532;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a1a1aa;
+    }
+    .telemetry-tile:last-child {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-color: rgba(225, 29, 72, 0.45);
+      background: linear-gradient(90deg, #13131a 0%, rgba(225, 29, 72, 0.14) 100%);
+    }
+    .telemetry-tile strong {
+      display: block;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 18px;
+      color: #ffffff;
+      margin-block-start: 2px;
+    }
+    .telemetry-tile:last-child strong {
+      margin-block-start: 0;
+      font-size: 20px;
+      color: #fb7185;
+    }
+
+    .shadow-terminal {
+      margin-block-start: 14px;
+      background: #060608;
+      border: 1px solid #22222c;
+      border-radius: 9px;
+      padding: 10px 12px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    /* Tablolar ve Kod Blokları */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-block-end: 1px solid var(--border-subtle); padding: 10px 11px; text-align: start; }
+    th {
+      color: var(--fg-muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+    tbody tr:hover {
+      background: var(--bg-elevated);
+    }
+
+    pre {
+      color-scheme: dark;
+      accent-color: var(--crimson);
+      margin: 0;
+      background: #08080b;
+      color: #f4f4f5;
+      border: 1px solid #252530;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
   }
 
-  .brand-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+  @layer utilities {
+    .hidden { display: none !important; }
   }
-
-  .crest-box {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #ffffff 0%, #e4e4e7 100%);
-    color: #09090b;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    border: 2px solid #e11d48;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  }
-  .crest-box span {
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: #be123c;
-    line-height: 1;
-    margin-top: 2px;
-  }
-
-  h1 {
-    font-size: 22px;
-    margin: 0 0 4px;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-    font-weight: 800;
-    color: #ffffff;
-  }
-  h2 { font-size: 18px; margin: 0 0 10px; font-weight: 800; letter-spacing: -0.01em; }
-  h3 { font-size: 15px; margin: 0 0 8px; font-weight: 700; }
-  .muted { color: var(--muted); font-size: 13px; }
-  .hero-header .muted { color: #d4d4d8; }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    border: 1px solid var(--line);
-  }
-  .badge.ok {
-    background: var(--ok-bg);
-    color: var(--ok);
-    border-color: currentColor;
-  }
-  .badge.warn {
-    background: var(--warn-bg);
-    color: var(--warn);
-    border-color: currentColor;
-  }
-  .badge.info {
-    background: #ffffff;
-    color: #09090b;
-    border-color: #ffffff;
-  }
-  .badge.crimson {
-    background: #e11d48;
-    color: #ffffff;
-    border-color: #e11d48;
-  }
-
-  /* Forma / Tema Seçici (Progressive Disclosure Settings Surface) */
-  details.theme-Menu {
-    position: relative;
-  }
-  details.theme-Menu summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.1);
-    color: #ffffff;
-    border: 1px solid rgba(255,255,255,0.25);
-    font-size: 12px;
-    font-weight: 700;
-    user-select: none;
-  }
-  details.theme-Menu summary::-webkit-details-marker { display: none; }
-  .theme-popover {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    z-index: 50;
-    background: var(--bg-card);
-    color: var(--fg);
-    border: 2px solid var(--line-strong);
-    border-radius: 10px;
-    padding: 8px;
-    min-width: 210px;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.45);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .theme-opt {
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    text-align: left;
-    padding: 7px 10px;
-    border-radius: 6px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--fg);
-    cursor: pointer;
-  }
-  .theme-opt:hover, .theme-opt.active {
-    background: var(--bg-elevated);
-    border-color: var(--crimson);
-  }
-
-  /* Sekmeler (Siyah-Beyaz Çubuklu Stil) */
-  .tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-  .tab-btn {
-    padding: 10px 18px;
-    border-radius: 8px;
-    border: 1.5px solid var(--line);
-    background: var(--bg-card);
-    color: var(--fg);
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 13.5px;
-    transition: all 0.15s ease;
-  }
-  .tab-btn:hover {
-    border-color: var(--line-strong);
-  }
-  .tab-btn.active {
-    background: var(--accent);
-    color: var(--accent-fg);
-    border-color: var(--accent);
-    box-shadow: 0 3px 0 var(--crimson);
-  }
-
-  .card {
-    background: var(--bg-card);
-    border: 1.5px solid var(--line);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-  }
-  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
-
-  .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-size: 13px; font-weight: 700; color: var(--fg); }
-  .hint { display: block; color: var(--muted); font-size: 11.5px; margin-bottom: 2px; }
-  .error-msg { display: none; color: var(--bad); font-size: 12px; font-weight: 600; margin-top: 3px; }
-
-  input, select {
-    font: inherit;
-    color: var(--fg);
-    background: var(--bg-elevated);
-    border: 1.5px solid var(--line);
-    border-radius: 8px;
-    padding: 9px 11px;
-  }
-  input:focus, select:focus {
-    outline: 2px solid var(--crimson);
-    outline-offset: 1px;
-  }
-  input:user-invalid,
-  input.user-invalid-fallback {
-    border-color: var(--bad);
-    background-color: var(--bad-bg);
-  }
-  input:user-invalid + .error-msg,
-  input.user-invalid-fallback + .error-msg {
-    display: block;
-  }
-  input:user-valid {
-    border-color: var(--ok);
-  }
-
-  button.primary {
-    font: inherit;
-    font-weight: 800;
-    padding: 10px 20px;
-    border: 2px solid var(--accent);
-    border-radius: 8px;
-    background: var(--accent);
-    color: var(--accent-fg);
-    cursor: pointer;
-    letter-spacing: 0.01em;
-    transition: transform 0.1s ease, box-shadow 0.15s ease;
-    box-shadow: 0 3px 0 var(--crimson);
-  }
-  button.primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 0 var(--crimson);
-  }
-  button.secondary {
-    font: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    padding: 8px 14px;
-    border: 1.5px solid var(--line);
-    border-radius: 8px;
-    background: var(--bg-elevated);
-    color: var(--fg);
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  button.secondary:hover { border-color: var(--crimson); }
-
-  /* Stadyum Skorbord Tarzı Telemetri Çubuğu */
-  .telemetry-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
-    gap: 8px;
-    background: #09090b;
-    color: #fafafa;
-    border: 1.5px solid #27272a;
-    border-top: 3px solid var(--crimson);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 14px;
-    font-size: 11.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .telemetry-bar div {
-    border-right: 1px solid #27272a;
-    padding-right: 8px;
-  }
-  .telemetry-bar div:last-child { border-right: 0; }
-  .telemetry-bar div strong {
-    display: block;
-    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-    font-size: 17px;
-    color: #ffffff;
-    margin-top: 2px;
-  }
-
-  .choice-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
-  .choice-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    padding: 13px 16px;
-    border-radius: 9px;
-    border: 1.5px solid var(--line);
-    background: var(--bg-elevated);
-    color: var(--fg);
-    text-align: left;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .choice-item:hover {
-    border-color: var(--line-strong);
-  }
-  .choice-item.selected {
-    border-color: var(--line-strong);
-    border-left: 5px solid var(--crimson);
-    background: var(--crimson-soft);
-    font-weight: 700;
-  }
-
-  .mentor-box {
-    background: var(--crimson-soft);
-    border: 1.5px solid var(--crimson);
-    border-left: 6px solid var(--crimson);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin: 12px 0;
-  }
-  .scaffolding-box {
-    background: var(--bg-elevated);
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--line-strong);
-    padding: 11px 14px;
-    border-radius: 6px;
-    margin: 10px 0;
-    font-size: 13.5px;
-  }
-
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: left; }
-  th { color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 11.5px; letter-spacing: 0.04em; }
-  pre {
-    color-scheme: dark;
-    accent-color: var(--crimson);
-    margin: 0;
-    background: #09090b;
-    color: #f4f4f5;
-    border: 1px solid #27272a;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<div class="cubuklu-ribbon" aria-hidden="true"></div>
-<main>
-  <header class="hero-header">
-    <div class="brand-row">
-      <div class="crest-box" aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<div class="top-accent-stripe" aria-hidden="true"></div>
+<main class="app-shell">
+  <!-- Üst Komut Stüdyosu Başlığı -->
+  <header class="studio-topbar">
+    <div class="brand-cluster">
+      <div class="brand-emblem" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="12 2 2 7 12 12 22 7 12 2"/>
           <polyline points="2 17 12 22 22 17"/>
           <polyline points="2 12 12 17 22 12"/>
@@ -441,18 +784,19 @@ try {
         <span>v2.0</span>
       </div>
       <div>
-        <h1 id="baslik">THE PRIMER v2 · UYARLAMALI MÜHENDİSLİK MENTORU</h1>
+        <div class="eyebrow-tag">NEURAL TELEMETRY & ADAPTIVE MENTOR ENGINE</div>
+        <h1 id="baslik">THE PRIMER v2 · UYARLAMALI MÜHENDİSLİK STÜDYOSU</h1>
         <div class="muted" id="aciklama">ONNX modeli yükleniyor…</div>
       </div>
     </div>
 
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <span id="engine-status" class="badge info" data-cy="engine-status">ONNX Hazırlanıyor</span>
       <span class="badge crimson">v2.0 · Seed: 13</span>
       <details class="theme-Menu" id="theme-menu">
         <summary>🎨 Görünüm Teması</summary>
         <div class="theme-popover" role="group" aria-label="Renk Şeması Seçimi">
-          <button type="button" class="theme-opt" data-scheme="light dark">⚙️ Sistem (Şu an: Otomatik)</button>
+          <button type="button" class="theme-opt" data-scheme="dark light">⚙️ Sistem (Şu an: Otomatik)</button>
           <button type="button" class="theme-opt" data-scheme="dark">🌑 Koyu Tema (Siyah)</button>
           <button type="button" class="theme-opt" data-scheme="light">☀️ Açık Tema (Beyaz)</button>
         </div>
@@ -460,7 +804,8 @@ try {
     </div>
   </header>
 
-  <nav class="tabs" aria-label="Uygulama modları">
+  <!-- Modern Mod Seçici -->
+  <nav class="mode-switcher" aria-label="Uygulama modları">
     <button type="button" class="tab-btn active" data-tab="story" data-cy="tab-story">🧭 1. Etkileşimli Hikâye (Primer v2)</button>
     <button type="button" class="tab-btn" data-tab="parity" data-cy="tab-parity">⚖️ 2. Diferansiyel Test & Parite Lab</button>
     <button type="button" class="tab-btn" data-tab="data" data-cy="tab-data">📊 3. Veri Toplama Modu (KVKK / CSV)</button>
@@ -468,138 +813,201 @@ try {
 
   <!-- ==================== SEKME 1: ETKİLEŞİMLİ HİKÂYE ==================== -->
   <section id="panel-story">
-    <!-- Aşama 1: 3 Soruluk Başlangıç Profili (v1 mirası) -->
-    <div id="onboarding-card" class="card" data-cy="onboarding-card">
-      <h2>🧭 Başlangıç Profili: Seni Tanıyalım (3 Soru)</h2>
-      <p class="muted">
-        Geçen haftaki <strong>The Primer v1</strong> girişindeki 3 soruya verdiğin yanıtlar başlangıç profilini belirler.
-        <strong>v2</strong>'de ise her sahnedeki gerçek zamanlı karar süren, seçenek değiştirme (tereddüt) sayın ve
-        teknik borç riskin <code>model.onnx</code> tarafından değerlendirilerek hikâye akışı canlı uyarlanır.
+    <!-- Aşama 1: 3 Soruluk Başlangıç Profili (Bento Kartları) -->
+    <div id="onboarding-card" class="card card-accent-top" data-cy="onboarding-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+        <div>
+          <div class="eyebrow-tag" style="color:var(--crimson);">ADIM 01 · BAŞLANGIÇ KALİBRASYONU</div>
+          <h2 id="onboarding-heading" tabindex="-1">🧭 Mühendislik Profilini Kalibre Et (3 Soru)</h2>
+        </div>
+        <span class="badge">Anonim Oturum: <code id="session-id-label" data-cy="session-id" style="margin-left:4px;">ses_...</code></span>
+      </div>
+      <p class="muted" style="margin-top:0; max-width:820px;">
+        <strong>The Primer v1</strong> girişindeki 3 soru başlangıç profilini belirler. <strong>v2</strong>'de ise her sahnedeki
+        gerçek zamanlı karar süren, şık değiştirme (tereddüt) sayın ve mimari risk skorun tarayıcı içinde çalışan
+        <code>model.onnx</code> tarafından değerlendirilerek Sokratik Mentor müdahalesi canlı uyarlanır.
       </p>
-      <div class="grid-3" style="margin-top:14px;">
-        <div class="field">
-          <label for="q1-seviye">1. Yazılım Mühendisliği Deneyimin</label>
-          <span class="hint">Modelin <code>deneyim_seviyesi</code> girdisini belirler</span>
-          <select id="q1-seviye" data-cy="q1-select">
-            <option value="1">1 — Çırak (Junior / Yeni Başlayan)</option>
-            <option value="2" selected>2 — Kalfa (Mid-Level / Gelişen)</option>
-            <option value="3">3 — Usta (Senior Adayı / Deneyimli)</option>
-          </select>
+
+      <div class="grid-3" style="margin-top:18px;">
+        <div class="onboarding-step-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="step-index">01</span>
+            <span class="muted mono">deneyim_seviyesi</span>
+          </div>
+          <div class="field">
+            <label for="q1-seviye">Yazılım Mühendisliği Deneyimin</label>
+            <span class="hint">Modelin başlangıç deneyim katmanını belirler</span>
+            <select id="q1-seviye" data-cy="q1-select">
+              <option value="1">1 — Çırak (Junior / Yeni Başlayan)</option>
+              <option value="2" selected>2 — Kalfa (Mid-Level / Gelişen)</option>
+              <option value="3">3 — Usta (Senior Adayı / Deneyimli)</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label for="q2-yaklasim">2. Üretimde Öncelikli Yaklaşımın</label>
-          <span class="hint">3V: Velocity mi Validation mı?</span>
-          <select id="q2-yaklasim" data-cy="q2-select">
-            <option value="0">Hızlı Prototipçi (Velocity Odaklı)</option>
-            <option value="1" selected>Doğrulama ve Test Odaklı (Validation)</option>
-          </select>
+
+        <div class="onboarding-step-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="step-index">02</span>
+            <span class="muted mono">mimari_risk_skoru</span>
+          </div>
+          <div class="field">
+            <label for="q2-yaklasim">Üretimde Öncelikli Yaklaşımın</label>
+            <span class="hint">3V: Velocity mi Validation mı?</span>
+            <select id="q2-yaklasim" data-cy="q2-select">
+              <option value="0">Hızlı Prototipçi (Velocity Odaklı)</option>
+              <option value="1" selected>Doğrulama ve Test Odaklı (Validation)</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label for="q3-refleks">3. Canlı Sistem Kriz Refleksin</label>
-          <span class="hint">Prod çöktüğünde ilk hamlen</span>
-          <select id="q3-refleks" data-cy="q3-select">
-            <option value="1">Log ve Telemetri Analizi</option>
-            <option value="2" selected>Commit'e Sabitli Rollback / Canary</option>
-            <option value="3">Canlıda Hızlı Yama (Hotfix)</option>
-          </select>
+
+        <div class="onboarding-step-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="step-index">03</span>
+            <span class="muted mono">kriz_refleksi</span>
+          </div>
+          <div class="field">
+            <label for="q3-refleks">Canlı Sistem Kriz Refleksin</label>
+            <span class="hint">Üretim ortamı çöktüğünde ilk hamlen</span>
+            <select id="q3-refleks" data-cy="q3-select">
+              <option value="1">Log ve Telemetri Analizi</option>
+              <option value="2" selected>Commit'e Sabitli Rollback / Canary</option>
+              <option value="3">Canlıda Hızlı Yama (Hotfix)</option>
+            </select>
+          </div>
         </div>
       </div>
-      <div style="margin-top:18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <button type="button" id="start-story-btn" class="primary" data-cy="start-story-btn">🚀 Hikâyeyi Başlat</button>
-        <span class="muted">Anonim Oturum Kimliği: <code id="session-id-label" data-cy="session-id">ses_...</code></span>
+
+      <div style="margin-top:22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:16px; border-top:1px solid var(--border-subtle);">
+        <div class="muted">5 sahnelik uyarlamalı yazılım mühendisliği simülasyonu · <code>onnxruntime-web</code></div>
+        <button type="button" id="start-story-btn" class="primary" data-cy="start-story-btn">🚀 Simülasyonu Başlat →</button>
       </div>
     </div>
 
-    <!-- Aşama 2: Aktif Sahne ve Model Uyarlama Paneli -->
-    <div id="scene-card" class="card hidden" data-cy="scene-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-        <div style="display:flex; gap:8px; align-items:center;">
-          <span class="badge crimson" id="scene-step-badge" data-cy="scene-number">Sahne 1 / 5</span>
-          <span class="badge" id="scene-difficulty-badge">Zorluk: 2/5</span>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button type="button" class="secondary" id="sim-hesitant-btn" data-cy="simulate-hesitant-btn" title="Demo ve test için tereddütlü oyuncu telemetrisi uygular">
-            🎭 Tereddütlü Oyuncu Simüle Et (Müdahale)
-          </button>
-          <button type="button" class="secondary" id="sim-autonomous-btn" data-cy="simulate-autonomous-btn" title="Demo ve test için hızlı/hatasız oyuncu telemetrisi uygular">
-            ⚡ Akıştaki Usta Simüle Et (Otonom)
-          </button>
-        </div>
+    <!-- Aşama 2: Aktif Sahne ve İki Sütunlu Bento Kokpit -->
+    <div id="scene-card" class="hidden" data-cy="scene-card">
+      <!-- 5 Sahnelik İlerleme Çubuğu -->
+      <div class="story-stepper" id="story-stepper" aria-label="Hikâye sahneleri ilerleme durumu">
+        <div class="step-node active" data-step="0"><span class="dot">1</span><span class="step-label">21. Adım Regresyon</span></div>
+        <div class="step-node" data-step="1"><span class="dot">2</span><span class="step-label">Shadow & Canary</span></div>
+        <div class="step-node" data-step="2"><span class="dot">3</span><span class="step-label">KVKK & Telemetri</span></div>
+        <div class="step-node" data-step="3"><span class="dot">4</span><span class="step-label">Parite Kahini</span></div>
+        <div class="step-node" data-step="4"><span class="dot">5</span><span class="step-label">Commit Rollback</span></div>
       </div>
 
-      <!-- Stadyum Skorbord Tarzı Canlı Davranışsal Telemetri Çubuğu (7 Özellik) -->
-      <div class="telemetry-bar" aria-label="Canlı oyuncu telemetrisi">
-        <div>Seviye<strong id="tel-seviye">2</strong></div>
-        <div>Sahne Zorluğu<strong id="tel-zorluk">2</strong></div>
-        <div>Karar Süresi (sn)<strong id="tel-sure" data-cy="tel-sure">4.0</strong></div>
-        <div>Şık Değiştirme<strong id="tel-degisim" data-cy="tel-degisim">0</strong></div>
-        <div>Önceki Kritik Hata<strong id="tel-hata">0</strong></div>
-        <div>Açılan İpucu<strong id="tel-ipucu">0</strong></div>
-        <div>Mimari Risk Skoru<strong id="tel-risk">0.12</strong></div>
-      </div>
-
-      <!-- ONNX Model Kararı Durum Çubuğu -->
-      <div class="card" style="background:var(--bg-elevated); margin-bottom:14px; padding:12px 14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div>
-            <strong>ONNX Uyarlama Motoru:</strong>
-            <code>P(mudahale_gerekli=1) = <span id="story-p" data-cy="story-p">0.0000</span></code>
+      <div class="scene-bento">
+        <!-- SOL SÜTUN: SAHNE ANLATIMI VE KARAR SEÇENEKLERİ -->
+        <div class="card card-accent-top" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="badge crimson" id="scene-step-badge" data-cy="scene-number">Sahne 1 / 5</span>
+              <span class="badge" id="scene-difficulty-badge">Zorluk: 2/5</span>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" class="secondary" id="sim-hesitant-btn" data-cy="simulate-hesitant-btn" title="Demo ve test için tereddütlü oyuncu telemetrisi uygular">
+                🎭 Tereddütlü Oyuncu Simüle Et
+              </button>
+              <button type="button" class="secondary" id="sim-autonomous-btn" data-cy="simulate-autonomous-btn" title="Demo ve test için hızlı/hatasız oyuncu telemetrisi uygular">
+                ⚡ Akıştaki Usta Simüle Et
+              </button>
+            </div>
           </div>
-          <span id="adaptation-badge" class="badge ok" data-cy="adaptation-badge">Otonom Mühendis Modu (Akış)</span>
+
+          <h2 id="scene-title" data-cy="scene-title" tabindex="-1" style="font-size:21px; margin-bottom:6px;">Sahne Başlığı</h2>
+
+          <div class="narrative-stage">
+            <p id="scene-narrative" data-cy="scene-narrative" style="margin:0;"></p>
+          </div>
+
+          <!-- Uyarlamalı Anlatım Derinliği (Adaptive Scaffolding - p >= 0.55 olduğunda açılır) -->
+          <div id="adaptive-scaffolding" class="scaffolding-box hidden" data-cy="adaptive-scaffolding">
+            <strong>📐 Uyarlamalı Derinlik — Mimari Ödünleşim Analizi:</strong>
+            <span id="scaffolding-text"></span>
+          </div>
+
+          <!-- Sokratik Mentor Müdahale Kartı (p >= 0.55 olduğunda otomatik açılır) -->
+          <div id="mentor-hint-card" class="mentor-box hidden" data-cy="mentor-hint-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <strong>🧭 Sokratik Mentor Müdahalesi (Model Olasılığı &ge; 0.55)</strong>
+              <span class="badge crimson">Tutor Koruması: Risk Cezası -%40</span>
+            </div>
+            <p id="mentor-hint-text" style="margin:8px 0 4px;"></p>
+            <div class="muted" id="mentor-ref-text"></div>
+          </div>
+
+          <!-- Karar Seçenekleri -->
+          <div class="choice-list" id="choice-list" data-cy="choice-list"></div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px; padding-top:14px; border-top:1px solid var(--border-subtle); flex-wrap:wrap; gap:10px;">
+            <button type="button" id="request-hint-btn" class="secondary" data-cy="request-hint-btn">
+              💡 Sokratik İpucu İste (+1 İpucu Sayacı)
+            </button>
+            <button type="button" id="confirm-choice-btn" class="primary" data-cy="confirm-choice-btn">
+              Kararı Onayla ve Sonraki Sahneye Geç →
+            </button>
+          </div>
         </div>
-        <div class="muted" id="shadow-log" data-cy="shadow-log" style="margin-top:6px; font-size:12px;">
-          [Shadow Deployment Karşılaştırması] v1 Kuralı vs. v2 ONNX Modeli hesaplanıyor…
-        </div>
-      </div>
 
-      <h2 id="scene-title" data-cy="scene-title">Sahne Başlığı</h2>
-      <p id="scene-narrative" data-cy="scene-narrative"></p>
+        <!-- SAĞ SÜTUN: CANLI ONNX KOKPİT & 7 ÖZELLİKLİ TELEMETRİ PANELİ -->
+        <aside class="onnx-cockpit" aria-label="Canlı ONNX Model ve Telemetri Kokpiti">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="eyebrow-tag" style="margin:0;">CANLI ONNX ÇIKARIM KOKPİTİ</span>
+            <span id="adaptation-badge" class="badge ok" data-cy="adaptation-badge">Otonom Mühendis Modu (Akış)</span>
+          </div>
 
-      <!-- Uyarlamalı Anlatım Derinliği (Adaptive Scaffolding - p >= 0.55 olduğunda açılır) -->
-      <div id="adaptive-scaffolding" class="scaffolding-box hidden" data-cy="adaptive-scaffolding">
-        <strong>📐 Uyarlamalı Derinlik — Mimari Ödünleşim Analizi:</strong>
-        <span id="scaffolding-text"></span>
-      </div>
+          <div class="prob-readout">
+            <span style="font-size:12px; color:#a1a1aa;">Müdahale Olasılığı <code>P(y=1)</code></span>
+            <strong class="prob-number mono" id="story-p" data-cy="story-p">0.0000</strong>
+          </div>
 
-      <!-- Sokratik Mentor Müdahale Kartı (p >= 0.55 olduğunda otomatik açılır) -->
-      <div id="mentor-hint-card" class="mentor-box hidden" data-cy="mentor-hint-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-          <strong>🧭 Sokratik Mentor Müdahalesi (Model Olasılığı &ge; 0.55)</strong>
-          <span class="badge crimson">Tutor Koruması: Risk Cezası -%40</span>
-        </div>
-        <p id="mentor-hint-text" style="margin:8px 0 4px;"></p>
-        <div class="muted" id="mentor-ref-text"></div>
-      </div>
+          <div class="prob-meter-track" title="Karar Eşiği: 0.55">
+            <div class="prob-meter-fill" id="story-p-bar"></div>
+            <div class="prob-threshold-mark" title="Eşik: 0.55"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:#9ca3af; margin-bottom:10px;">
+            <span>0.00 (Otonom)</span>
+            <span>Eşik: 0.55</span>
+            <span>1.00 (Sokratik Mentor)</span>
+          </div>
 
-      <!-- Karar Seçenekleri -->
-      <div class="choice-list" id="choice-list" data-cy="choice-list"></div>
+          <!-- 7 Davranışsal Telemetri Bento Izgarası -->
+          <div class="telemetry-bar" aria-label="Canlı oyuncu telemetrisi">
+            <div class="telemetry-tile">Deneyim Seviyesi<strong id="tel-seviye">2</strong></div>
+            <div class="telemetry-tile">Sahne Zorluğu<strong id="tel-zorluk">2</strong></div>
+            <div class="telemetry-tile">Karar Süresi (sn)<strong id="tel-sure" data-cy="tel-sure">4.0</strong></div>
+            <div class="telemetry-tile">Şık Değiştirme<strong id="tel-degisim" data-cy="tel-degisim">0</strong></div>
+            <div class="telemetry-tile">Önceki Kritik Hata<strong id="tel-hata">0</strong></div>
+            <div class="telemetry-tile">Açılan İpucu<strong id="tel-ipucu">0</strong></div>
+            <div class="telemetry-tile">
+              <span>Mimari Risk Skoru</span>
+              <strong id="tel-risk">0.12</strong>
+            </div>
+          </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px;">
-        <button type="button" id="request-hint-btn" class="secondary" data-cy="request-hint-btn">
-          💡 Sokratik İpucu İste (+1 İpucu Sayacı)
-        </button>
-        <button type="button" id="confirm-choice-btn" class="primary" data-cy="confirm-choice-btn">
-          Kararı Onayla ve Sonraki Sahneye Geç →
-        </button>
+          <!-- Shadow Mode Karşılaştırma Terminali -->
+          <div class="shadow-terminal" id="shadow-log" data-cy="shadow-log">
+            [Shadow Deployment Karşılaştırması] v1 Kuralı vs. v2 ONNX Modeli hesaplanıyor…
+          </div>
+        </aside>
       </div>
     </div>
 
     <!-- Aşama 3: Hikâye Sonu Mühendislik Karnesi (Regresyon E2E Bitiş Ekranı) -->
-    <div id="summary-card" class="card hidden" data-cy="summary-card">
-      <h2>🎓 The Primer v2 — Mühendislik Karnesi & Oturum Özeti</h2>
-      <p id="summary-outcome" data-cy="summary-outcome"></p>
-      <div class="grid-3" style="margin:14px 0;">
-        <div class="card" style="margin:0; background:var(--bg-elevated);">
+    <div id="summary-card" class="card card-accent-top hidden" data-cy="summary-card">
+      <div class="eyebrow-tag" style="color:var(--crimson);">SİMÜLASYON TAMAMLANDI · MÜHENDİSLİK KARNESİ</div>
+      <h2 id="summary-heading" tabindex="-1">🎓 The Primer v2 — Mühendislik Karnesi & Oturum Özeti</h2>
+      <p id="summary-outcome" data-cy="summary-outcome" style="font-size:15.5px;"></p>
+      <div class="grid-3" style="margin:18px 0;">
+        <div class="onboarding-step-card">
           <div class="muted">Son Mimari Risk Skoru</div>
-          <strong id="sum-risk" style="font-size:22px;">0.00</strong>
+          <strong id="sum-risk" class="mono" style="font-size:26px; color:var(--crimson);">0.00</strong>
         </div>
-        <div class="card" style="margin:0; background:var(--bg-elevated);">
+        <div class="onboarding-step-card">
           <div class="muted">Toplam Kritik Hata</div>
-          <strong id="sum-errors" style="font-size:22px;">0</strong>
+          <strong id="sum-errors" class="mono" style="font-size:26px;">0</strong>
         </div>
-        <div class="card" style="margin:0; background:var(--bg-elevated);">
+        <div class="onboarding-step-card">
           <div class="muted">Sokratik Mentor Müdahalesi</div>
-          <strong id="sum-interventions" style="font-size:22px;">0 / 5 Sahne</strong>
+          <strong id="sum-interventions" class="mono" style="font-size:26px;">0 / 5 Sahne</strong>
         </div>
       </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -611,67 +1019,84 @@ try {
 
   <!-- ==================== SEKME 2: DİFERANSİYEL TEST & PARİTE LAB ==================== -->
   <section id="panel-parity" class="hidden">
-    <div class="card">
-      <h2>⚖️ Diferansiyel Test (Parite Testi) ve Test Kahini (Oracle) Doğrulaması</h2>
-      <p class="muted">
-        Bu laboratuvar, tarayıcıdaki <code>onnxruntime-web</code> çıkarımı ile Python Test Kahini
-        (<code>tests/parite.py</code> → <code>tests/parite.json</code>) arasındaki farkın
-        <strong>hata toleransı <code>1e-4</code> ($10^{-4}$)</strong> altında olduğunu doğrular.
-        Cypress diferansiyel testi <code>[data-cy="p"]</code> alanını doğrudan okur.
-      </p>
+    <div class="parity-bento">
+      <!-- Sol Sütun: Canlı 7 Özellikli ONNX Giriş Formu -->
+      <div class="card card-accent-top" style="margin-bottom:0;">
+        <div class="eyebrow-tag" style="color:var(--crimson);">CANLI VEKTÖR TESTİ</div>
+        <h2 id="parity-heading" tabindex="-1">🔬 Manuel & Referans Girdi Vektörü</h2>
+        <p class="muted" style="margin-top:4px;">
+          5 referans senaryodan birini yükleyin veya 7 davranışsal özelliği değiştirerek tarayıcıdaki <code>model.onnx</code> çıktısını inceleyin.
+        </p>
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;">
-        <button type="button" class="secondary" data-case-idx="0" data-cy="load-case-0">Örnek 1 (Tereddütlü Çırak)</button>
-        <button type="button" class="secondary" data-case-idx="1" data-cy="load-case-1">Örnek 2 (Otonom Usta)</button>
-        <button type="button" class="secondary" data-case-idx="2" data-cy="load-case-2">Örnek 3 (Sınırda Kalfa)</button>
-        <button type="button" class="secondary" data-case-idx="3" data-cy="load-case-3">Örnek 4 (Aceleci Yüksek Risk)</button>
-        <button type="button" class="secondary" data-case-idx="4" data-cy="load-case-4">Örnek 5 (Dengeli Kalfa)</button>
-        <button type="button" class="primary" id="run-all-parity-btn" data-cy="run-all-parity-btn">
-          ✓ 5 Referans Girdiyle Parite Tablosunu Doğrula
-        </button>
-      </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin:14px 0;">
+          <button type="button" class="secondary" data-case-idx="0" data-cy="load-case-0">Örnek 1 (Tereddütlü Çırak)</button>
+          <button type="button" class="secondary" data-case-idx="1" data-cy="load-case-1">Örnek 2 (Otonom Usta)</button>
+          <button type="button" class="secondary" data-case-idx="2" data-cy="load-case-2">Örnek 3 (Sınırda Kalfa)</button>
+          <button type="button" class="secondary" data-case-idx="3" data-cy="load-case-3">Örnek 4 (Aceleci Risk)</button>
+          <button type="button" class="secondary" data-case-idx="4" data-cy="load-case-4">Örnek 5 (Dengeli Kalfa)</button>
+        </div>
 
-      <form id="form" class="grid-3" novalidate></form>
-      <div style="margin-top:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-        <button type="submit" form="form" id="tahmin" class="primary" data-cy="predict-btn">Tahmin et</button>
-        <div>
-          Olasılık <code>P(mudahale_gerekli=1)</code>:
-          <strong id="p-deger" data-cy="p" style="font-size:19px;">0.000000</strong>
-          <span id="p-karar-rozet" class="badge crimson" style="margin-left:8px;">—</span>
+        <form id="form" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;" novalidate></form>
+
+        <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border-subtle); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <button type="submit" form="form" id="tahmin" class="primary" data-cy="predict-btn">Tahmin et</button>
+          <div>
+            Olasılık <code>P(1)</code>:
+            <strong id="p-deger" class="mono" data-cy="p" style="font-size:21px; margin-left:4px;">0.000000</strong>
+            <span id="p-karar-rozet" class="badge crimson" style="margin-left:6px;">—</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <h3>5 Referans Girdi — Python Oracle vs. Tarayıcı (`onnxruntime-web`) Parite Tablosu</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Senaryo ID</th>
-            <th>Python Oracle <code>P(1)</code></th>
-            <th>Tarayıcı ONNX <code>P(1)</code></th>
-            <th>Mutlak Fark <code>|Δ|</code></th>
-            <th>Tolerans (<code>&lt; 1e-4</code>)</th>
-          </tr>
-        </thead>
-        <tbody id="parity-table-body" data-cy="parity-table-body"></tbody>
-      </table>
-    </div>
+      <!-- Sağ Sütun: 5 Referans Girdi Parite Matrisi + JSON Çıktı -->
+      <div>
+        <div class="card card-accent-top">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+            <div>
+              <div class="eyebrow-tag" style="color:var(--crimson);">DIFFERENTIAL TESTING ORACLE</div>
+              <h3>⚖️ Python Oracle vs. Tarayıcı (`onnxruntime-web`) Parite Matrisi</h3>
+            </div>
+            <button type="button" class="primary" id="run-all-parity-btn" data-cy="run-all-parity-btn">
+              ✓ 5 Referans Girdiyle Doğrula
+            </button>
+          </div>
+          <p class="muted" style="margin-top:0;">
+            <code>tests/parite.py</code> → <code>tests/parite.json</code> içindeki Python Test Kahini ile tarayıcı çıkarımı arasındaki fark
+            <strong><code>&lt; 1e-4</code> ($10^{-4}$)</strong> olmalıdır.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Senaryo ID</th>
+                <th>Python Oracle <code>P(1)</code></th>
+                <th>Tarayıcı ONNX <code>P(1)</code></th>
+                <th>Mutlak Fark <code>|Δ|</code></th>
+                <th>Tolerans (<code>&lt; 1e-4</code>)</th>
+              </tr>
+            </thead>
+            <tbody id="parity-table-body" data-cy="parity-table-body"></tbody>
+          </table>
+        </div>
 
-    <div class="card muted">
-      Kaynak: <code id="kaynak">./model/</code><br>
-      Ham Çıktı:
-      <pre id="ham">—</pre>
+        <div class="card muted" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span>Aktif Model Kaynağı: <code id="kaynak">./model/</code></span>
+            <span class="badge">Float32 Tensor [1, 7]</span>
+          </div>
+          <pre id="ham">—</pre>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- ==================== SEKME 3: VERİ TOPLAMA MODU (KVKK / CSV) ==================== -->
   <section id="panel-data" class="hidden">
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div class="card card-accent-top">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-          <h2>📊 Veri Toplama Modu (`kaynak = gercek`) & KVKK Uyumlu Oturum Kaydı</h2>
-          <p class="muted" style="margin:0;">
+          <div class="eyebrow-tag" style="color:var(--crimson);">KVKK VERİ MİNİMİZASYONU · TELEMETRİ KAYDI</div>
+          <h2 id="data-heading" tabindex="-1">📊 Veri Toplama Modu (`kaynak = gercek`) & Oturum Kaydı</h2>
+          <p class="muted" style="margin:4px 0 0;">
             Kişisel veri (ad, e-posta, IP, cihaz kimliği) toplanmaz. Her sahne kararı anonim <code>oturum_id</code> ile kaydedilir.
           </p>
         </div>
@@ -679,24 +1104,26 @@ try {
           ⬇️ Oturum Verisini CSV İndir (`oturumlar.csv` Formatında)
         </button>
       </div>
-      <table style="margin-top:14px;">
-        <thead>
-          <tr>
-            <th>oturum_id</th>
-            <th>sahne_no</th>
-            <th>seviye</th>
-            <th>zorluk</th>
-            <th>sure_sn</th>
-            <th>degisim</th>
-            <th>hata</th>
-            <th>ipucu</th>
-            <th>risk</th>
-            <th>mudahale</th>
-            <th>kaynak</th>
-          </tr>
-        </thead>
-        <tbody id="telemetry-log-body" data-cy="telemetry-log-body"></tbody>
-      </table>
+      <div style="overflow-x:auto; margin-top:16px;">
+        <table>
+          <thead>
+            <tr>
+              <th>oturum_id</th>
+              <th>sahne_no</th>
+              <th>seviye</th>
+              <th>zorluk</th>
+              <th>sure_sn</th>
+              <th>degisim</th>
+              <th>hata</th>
+              <th>ipucu</th>
+              <th>risk</th>
+              <th>mudahale</th>
+              <th>kaynak</th>
+            </tr>
+          </thead>
+          <tbody id="telemetry-log-body" data-cy="telemetry-log-body"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 </main>
@@ -704,13 +1131,30 @@ try {
 <script>
 ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
 
+// Modern Web Guidance: same-document-transitions helper with progressive enhancement & focus routing
+function gorunumGecisiYap(domGuncelle, odakId) {
+  if (!document.startViewTransition) {
+    domGuncelle();
+    if (odakId) document.getElementById(odakId)?.focus({ preventScroll: true });
+    return;
+  }
+  const transition = document.startViewTransition(() => {
+    domGuncelle();
+  });
+  if (odakId) {
+    transition.finished.finally(() => {
+      document.getElementById(odakId)?.focus({ preventScroll: true });
+    });
+  }
+}
+
 // Modern Web Guidance: dark-mode-toggle (meta[name="color-scheme"] + localStorage sync)
 (() => {
   const meta = document.querySelector('meta[name="color-scheme"]');
   const menu = document.getElementById("theme-menu");
   const sistemEtiketGuncelle = () => {
     const sistemKoyu = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    const sysBtn = document.querySelector('[data-scheme="light dark"]');
+    const sysBtn = document.querySelector('[data-scheme="dark light"]');
     if (sysBtn) {
       sysBtn.textContent = `⚙️ Sistem (Şu an: ${sistemKoyu ? "Koyu" : "Açık"})`;
     }
@@ -721,14 +1165,14 @@ ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/di
       const hedef = btn.getAttribute("data-scheme");
       meta.content = hedef;
       try {
-        if (hedef === "light dark") localStorage.removeItem("color-scheme");
+        if (hedef === "dark light") localStorage.removeItem("color-scheme");
         else localStorage.setItem("color-scheme", hedef);
       } catch (_) {}
       if (menu) menu.open = false;
     });
   });
   window.addEventListener("storage", (e) => {
-    if (e.key === "color-scheme") meta.content = e.newValue ?? "light dark";
+    if (e.key === "color-scheme") meta.content = e.newValue ?? "dark light";
   });
 })();
 
@@ -927,7 +1371,7 @@ function pariteFormunuKur() {
   formEl.innerHTML = config.features.map(o => `
     <div class="field">
       <label for="inp-${o.name}">${o.label}</label>
-      <span id="hint-${o.name}" class="hint">Birim: ${o.unit || "sayı"} (Aralık: ${o.min ?? 0} – ${o.max ?? 100})</span>
+      <span id="hint-${o.name}" class="hint">Birim: ${o.unit || "sayı"} (${o.min ?? 0}–${o.max ?? 100})</span>
       <input
         type="number"
         step="any"
@@ -1025,6 +1469,13 @@ function aktifGirdiVektoru() {
   };
 }
 
+function stepperGuncelle() {
+  document.querySelectorAll("#story-stepper .step-node").forEach((el, idx) => {
+    el.classList.toggle("active", idx === oyun.sahneIdx);
+    el.classList.toggle("done", idx < oyun.sahneIdx);
+  });
+}
+
 async function sahneModeliDegerlendir() {
   if (!config || !oturum) return;
   const girdi = aktifGirdiVektoru();
@@ -1043,6 +1494,11 @@ async function sahneModeliDegerlendir() {
   const mudahaleAktif = sonuc.p1 >= esik;
 
   document.getElementById("story-p").textContent = sonuc.p1.toFixed(4);
+  const barEl = document.getElementById("story-p-bar");
+  if (barEl) {
+    barEl.style.width = `${Math.max(4, Math.min(100, sonuc.p1 * 100)).toFixed(1)}%`;
+  }
+
   const rozet = document.getElementById("adaptation-badge");
   const mentorKart = document.getElementById("mentor-hint-card");
   const scaffoldingKart = document.getElementById("adaptive-scaffolding");
@@ -1076,6 +1532,7 @@ async function sahneyiCiz() {
   oyun.seciliSecenekIdx = 0;
   oyun.secenekDegistirme = 0;
 
+  stepperGuncelle();
   document.getElementById("scene-step-badge").textContent = `Sahne ${sahne.no} / ${SAHNELER.length}`;
   document.getElementById("scene-difficulty-badge").textContent = `Zorluk: ${sahne.zorluk}/5`;
   document.getElementById("scene-title").textContent = sahne.baslik;
@@ -1084,6 +1541,7 @@ async function sahneyiCiz() {
   document.getElementById("mentor-hint-text").textContent = sahne.ipucu;
   document.getElementById("mentor-ref-text").textContent = sahne.referans;
 
+  const harfler = ["A", "B", "C"];
   const liste = document.getElementById("choice-list");
   liste.innerHTML = sahne.secenekler.map((sec, idx) => `
     <button
@@ -1092,7 +1550,10 @@ async function sahneyiCiz() {
       data-choice-idx="${idx}"
       data-cy="choice-${idx}"
     >
-      <span>${sec.metin}</span>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="choice-key">${harfler[idx] || idx + 1}</span>
+        <span>${sec.metin}</span>
+      </div>
       ${sec.hataMi ? `<span class="badge warn risk-warning-pill hidden">⚠️ Yüksek Teknik Borç Riski</span>` : ""}
     </button>
   `).join("");
@@ -1125,9 +1586,11 @@ function hikayeyiBaslat() {
   oyun.mimariRiskSkoru = oyun.yaklasim === 0 ? 0.22 : 0.10;
 
   document.getElementById("session-id-label").textContent = oyun.oturumId;
-  document.getElementById("onboarding-card").classList.add("hidden");
-  document.getElementById("summary-card").classList.add("hidden");
-  document.getElementById("scene-card").classList.remove("hidden");
+  gorunumGecisiYap(() => {
+    document.getElementById("onboarding-card").classList.add("hidden");
+    document.getElementById("summary-card").classList.add("hidden");
+    document.getElementById("scene-card").classList.remove("hidden");
+  }, "scene-title");
 
   if (oyun.timerId) clearInterval(oyun.timerId);
   oyun.timerId = setInterval(() => {
@@ -1182,8 +1645,10 @@ async function karariOnayla() {
 
 function hikayeyiBitir() {
   if (oyun.timerId) clearInterval(oyun.timerId);
-  document.getElementById("scene-card").classList.add("hidden");
-  document.getElementById("summary-card").classList.remove("hidden");
+  gorunumGecisiYap(() => {
+    document.getElementById("scene-card").classList.add("hidden");
+    document.getElementById("summary-card").classList.remove("hidden");
+  }, "summary-heading");
 
   document.getElementById("sum-risk").textContent = oyun.mimariRiskSkoru.toFixed(2);
   document.getElementById("sum-errors").textContent = String(oyun.kritikHataSayisi);
@@ -1236,20 +1701,25 @@ function csvIndir() {
 // ==================== OLAY DİNLEYİCİLERİ ====================
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
     const hedef = btn.getAttribute("data-tab");
-    document.getElementById("panel-story").classList.toggle("hidden", hedef !== "story");
-    document.getElementById("panel-parity").classList.toggle("hidden", hedef !== "parity");
-    document.getElementById("panel-data").classList.toggle("hidden", hedef !== "data");
+    const odakMap = { story: "onboarding-heading", parity: "parity-heading", data: "data-heading" };
+    gorunumGecisiYap(() => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-story").classList.toggle("hidden", hedef !== "story");
+      document.getElementById("panel-parity").classList.toggle("hidden", hedef !== "parity");
+      document.getElementById("panel-data").classList.toggle("hidden", hedef !== "data");
+    }, odakMap[hedef]);
   });
 });
 
 document.getElementById("start-story-btn").addEventListener("click", hikayeyiBaslat);
 document.getElementById("confirm-choice-btn").addEventListener("click", karariOnayla);
 document.getElementById("restart-story-btn").addEventListener("click", () => {
-  document.getElementById("summary-card").classList.add("hidden");
-  document.getElementById("onboarding-card").classList.remove("hidden");
+  gorunumGecisiYap(() => {
+    document.getElementById("summary-card").classList.add("hidden");
+    document.getElementById("onboarding-card").classList.remove("hidden");
+  }, "onboarding-heading");
 });
 document.getElementById("go-data-tab-btn").addEventListener("click", () => {
   document.querySelector('[data-tab="data"]').click();
