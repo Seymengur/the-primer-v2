@@ -4,7 +4,7 @@
 > - **Canlı Uygulama (GitHub Pages):** <https://seymengur.github.io/the-primer-v2/>
 > - **Demo Video (65 sn Cypress E2E Kaydı):** <https://seymengur.github.io/the-primer-v2/demo.html> ([MP4](https://seymengur.github.io/the-primer-v2/demo.mp4))
 > - **Hugging Face Model Reposu:** <https://huggingface.co/Seymen55/the-primer-v2-onnx>
-> - **Commit-Sabitli ONNX Model URL'si:** `https://huggingface.co/Seymen55/the-primer-v2-onnx/resolve/846390dc7ad50af1e942307346bfd0e8e93824a2/model.onnx`
+> - **Commit-Sabitli ONNX Model URL'si:** https://huggingface.co/Seymen55/the-primer-v2-onnx/resolve/846390dc7ad50af1e942307346bfd0e8e93824a2/model.onnx
 
 **The Primer v2**, kullanıcının başlangıçtaki 3 soruluk profiliyle başlayan etkileşimli yazılım mühendisliği hikâyesini, oyuncunun sahne içindeki gerçek zamanlı davranışından (karar süresi, seçenek değiştirme/tereddüt sayısı, birikimli kritik hata örüntüsü ve teknik borç riski) öğrenen **küçük, göreve özel (dikey) bir tabular ONNX modeline** (`StandardScaler → LogisticRegression`) bağlar.
 
